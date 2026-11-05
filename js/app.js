@@ -447,6 +447,10 @@ function initNavigation() {
 
 function renderMainDashboard() {
     const stats = state.matchPlayerStats || [];
+    console.log(
+    "PARTIDAS DEL 5 DE NOVIEMBRE:",
+    stats.filter(s => s.matchDate === "2026-11-05")
+);
 
     console.table(state.players.map(p => ({
     jugador: p.nick,
@@ -1337,25 +1341,25 @@ function renderDashboardKillsDistribution() {
             state.user = user;
 
             const [
-               { data: remoteRosters, error: rosterError },
-               { data: remotePlayers, error: playerError },
-               { data: remoteMatchStats, error: matchStatsError }
-            ] = await Promise.all([
-                supabaseClient
-                    .from("rosters")
-                    .select("*")
-                    .order("created_at", { ascending: true }),
+    { data: remoteRosters, error: rosterError },
+    { data: remotePlayers, error: playerError },
+    { data: remoteMatchStats, error: matchStatsError }
+] = await Promise.all([
+    supabaseClient
+        .from("rosters")
+        .select("*")
+        .order("created_at", { ascending: true }),
 
-                supabaseClient
-                    .from("players")
-                    .select("*")
-                    .order("created_at", { ascending: true }),
+    supabaseClient
+        .from("players")
+        .select("*")
+        .order("created_at", { ascending: true }),
 
-                supabaseClient
-                    .from("match_player_stats")
-                    .select("*")
-                    .order("match_date", { ascending: true })
-            ]);
+    supabaseClient
+        .from("match_player_stats")
+        .select("*")
+        .order("match_date", { ascending: false })
+]);
 
             if (rosterError) throw rosterError;
             if (playerError) throw playerError;
@@ -1417,6 +1421,10 @@ function renderDashboardKillsDistribution() {
         const regionInput = $("rosterRegion");
         const statusInput = $("rosterStatus");
         const descriptionInput = $("rosterDescription");
+        const rosterModalTitle = $("rosterModalTitle");
+        const saveRosterButton = $("saveRosterButton");
+
+        let editingRosterId = null;
 
         const totalRosters = $("totalRosters");
         const totalPlayers = $("totalRosterPlayers");
@@ -1707,19 +1715,42 @@ blockResultsForm?.addEventListener("submit", async (event) => {
         const cancelDelete = $("cancelarEliminarRoster");
         const confirmDelete = $("confirmarEliminarRoster");
 
-        function openModal() {
-            form.reset();
-            modal.hidden = false;
-            document.body.style.overflow = "hidden";
-            nameInput?.focus();
-        }
+        function openModal(roster = null) {
+    form.reset();
+
+    editingRosterId = roster ? roster.id : null;
+
+    if (roster) {
+        nameInput.value = roster.name || "";
+        tagInput.value = roster.tag || "";
+        regionInput.value = roster.region || "";
+        statusInput.value = roster.status || "Activo";
+        descriptionInput.value = roster.description || "";
+
+        rosterModalTitle.textContent = "Editar roster";
+        saveRosterButton.textContent = "Guardar cambios";
+    } else {
+        rosterModalTitle.textContent = "Crear roster";
+        saveRosterButton.textContent = "Guardar roster";
+    }
+
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+    nameInput?.focus();
+}
 
         function closeModal() {
-            modal.hidden = true;
-            document.body.style.overflow = "";
-            form.reset();
-            openButton.focus();
-        }
+    modal.hidden = true;
+    document.body.style.overflow = "";
+    form.reset();
+
+    editingRosterId = null;
+
+    rosterModalTitle.textContent = "Crear roster";
+    saveRosterButton.textContent = "Guardar roster";
+
+    openButton.focus();
+}
 
         function renderRosters() {
             const query = searchInput.value.trim().toLowerCase();
@@ -1805,13 +1836,23 @@ blockResultsForm?.addEventListener("submit", async (event) => {
                         <span>${escapeHTML(roster.region || "Región sin definir")}</span>
                         <span class="roster-status">${escapeHTML(roster.status)}</span>
 
-                        <button
-                            type="button"
-                            class="roster-delete-button"
-                            data-delete-roster="${escapeHTML(roster.id)}"
-                            aria-label="Eliminar roster ${escapeHTML(roster.name)}"
-                        >Eliminar</button>
-                    </div>
+                        <div class="roster-actions">
+    <button
+        type="button"
+        class="roster-edit-button"
+        data-edit-roster="${escapeHTML(roster.id)}"
+        aria-label="Editar roster ${escapeHTML(roster.name)}"
+        title="Editar"
+    ><span aria-hidden="true">✎</span></button>
+
+    <button
+        type="button"
+        class="roster-delete-button"
+        data-delete-roster="${escapeHTML(roster.id)}"
+        aria-label="Eliminar roster ${escapeHTML(roster.name)}"
+        title="Eliminar"
+    ><span aria-hidden="true">🗑</span></button>
+</div>
 
                     ${roster.description
                         ? `<p class="roster-item-description">${escapeHTML(roster.description)}</p>`
@@ -2275,30 +2316,49 @@ if (blockTop4PlusDisplay) {
         }
 
         rosterList.addEventListener("click", (event) => {
-            const deleteButton = event.target.closest("[data-delete-roster]");
 
-            if (deleteButton) {
-                event.stopPropagation();
+    // EDITAR ROSTER
+    const editButton = event.target.closest("[data-edit-roster]");
 
-                const roster = getRosterById(deleteButton.dataset.deleteRoster);
-                if (!roster || !deleteModal) return;
+    if (editButton) {
+        event.stopPropagation();
 
-                rosterPendingDelete = roster.id;
+        const roster = getRosterById(editButton.dataset.editRoster);
 
-                if (deleteName) deleteName.textContent = roster.name;
+        if (roster) {
+            openModal(roster);
+        }
 
-                deleteModal.hidden = false;
-                document.body.style.overflow = "hidden";
-                confirmDelete?.focus();
-                return;
-            }
+        return;
+    }
 
-            const card = event.target.closest(".roster-item");
+    // ELIMINAR ROSTER
+    const deleteButton = event.target.closest("[data-delete-roster]");
 
-            if (card) {
-                openRosterDetails(getRosterById(card.dataset.rosterId));
-            }
-        });
+    if (deleteButton) {
+        event.stopPropagation();
+
+        const roster = getRosterById(deleteButton.dataset.deleteRoster);
+        if (!roster || !deleteModal) return;
+
+        rosterPendingDelete = roster.id;
+
+        if (deleteName) deleteName.textContent = roster.name;
+
+        deleteModal.hidden = false;
+        document.body.style.overflow = "hidden";
+        confirmDelete?.focus();
+
+        return;
+    }
+
+    // ABRIR DETALLES DEL ROSTER
+    const card = event.target.closest(".roster-item");
+
+    if (card) {
+        openRosterDetails(getRosterById(card.dataset.rosterId));
+    }
+});
 
         rosterList.addEventListener("keydown", (event) => {
             if (
@@ -2382,27 +2442,53 @@ if (blockTop4PlusDisplay) {
             submitButton.textContent = "Guardando...";
 
             try {
-                const image = await prepareImage(imageInput.files[0]);
+                const existingRoster = editingRosterId
+    ? getRosterById(editingRosterId)
+    : null;
 
-                const row = {
-                    user_id: state.user.id,
-                    name,
-                    tag: tagInput.value.trim() || null,
-                    image: image || null,
-                    region: regionInput.value || null,
-                    status: statusInput.value || "Activo",
-                    description: descriptionInput.value.trim() || null
-                };
+const image = await prepareImage(imageInput.files[0]);
 
-                const { data, error } = await supabaseClient
-                    .from("rosters")
-                    .insert(row)
-                    .select("*")
-                    .single();
+const row = {
+    user_id: state.user.id,
+    name,
+    tag: tagInput.value.trim() || null,
+    image: image || existingRoster?.image || null,
+    region: regionInput.value || null,
+    status: statusInput.value || "Activo",
+    description: descriptionInput.value.trim() || null
+};
 
-                if (error) throw error;
+if (editingRosterId) {
+    const { data, error } = await supabaseClient
+        .from("rosters")
+        .update(row)
+        .eq("id", editingRosterId)
+        .eq("user_id", state.user.id)
+        .select("*")
+        .single();
 
-                state.rosters.push(mapRoster(data));
+    if (error) throw error;
+
+    const updatedRoster = mapRoster(data);
+
+    const index = state.rosters.findIndex(
+        (roster) => String(roster.id) === String(editingRosterId)
+    );
+
+    if (index !== -1) {
+        state.rosters[index] = updatedRoster;
+    }
+} else {
+    const { data, error } = await supabaseClient
+        .from("rosters")
+        .insert(row)
+        .select("*")
+        .single();
+
+    if (error) throw error;
+
+    state.rosters.push(mapRoster(data));
+}
                 saveLocalBackup();
 
                 searchInput.value = "";
@@ -2416,9 +2502,11 @@ if (blockTop4PlusDisplay) {
                     error.message || "No se pudo guardar el roster."
                 );
             } finally {
-                submitButton.disabled = false;
-                submitButton.textContent = "Guardar roster";
-            }
+    submitButton.disabled = false;
+    submitButton.textContent = editingRosterId
+        ? "Guardar cambios"
+        : "Guardar roster";
+}
         });
 
         return { renderRosters, openModal, closeModal };
@@ -2453,6 +2541,10 @@ if (blockTop4PlusDisplay) {
         const statusInput = $("playerStatus");
         const regionInput = $("playerRegion");
         const notesInput = $("playerNotes");
+        const playerModalTitle = $("playerModalTitle");
+        const savePlayerButton = $("savePlayerButton");
+
+        let editingPlayerId = null;
 
         const totalPlayers = $("totalPlayers");
         const activePlayers = $("activePlayers");
@@ -3763,21 +3855,76 @@ setText("playerProfileBooyahs", String(booyahs), "0");
             }
         }
 
-        function openModal() {
-            form.reset();
-            refreshRosterOptions();
+        function openModal(player = null) {
+    form.reset();
+    refreshRosterOptions();
 
-            modal.hidden = false;
-            document.body.style.overflow = "hidden";
-            nickInput?.focus();
+    editingPlayerId = player ? player.id : null;
+
+    if (player) {
+        // Cargar los datos actuales del jugador.
+        nickInput.value = player.nick || "";
+        nameInput.value = player.name || "";
+        rosterSelect.value = String(player.rosterId || "");
+        roleInput.value = player.role || "";
+        statusInput.value = player.status || "Activo";
+        regionInput.value = player.region || "";
+        notesInput.value = player.notes || "";
+
+        if (playerModalTitle) {
+            playerModalTitle.textContent = "Editar jugador";
         }
+
+        if (savePlayerButton) {
+            savePlayerButton.textContent = "Guardar cambios";
+        }
+    } else {
+        if (playerModalTitle) {
+            playerModalTitle.textContent = "Registrar jugador";
+        }
+
+        if (savePlayerButton) {
+            savePlayerButton.textContent = "Guardar jugador";
+        }
+    }
+
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+    nickInput?.focus();
+}
 
         function closeModal() {
-            modal.hidden = true;
-            document.body.style.overflow = "";
-            form.reset();
-            openButton.focus();
-        }
+    modal.hidden = true;
+    document.body.style.overflow = "";
+    form.reset();
+
+    editingPlayerId = null;
+
+    if (playerModalTitle) {
+        playerModalTitle.textContent = "Registrar jugador";
+    }
+
+    if (savePlayerButton) {
+        savePlayerButton.textContent = "Guardar jugador";
+        savePlayerButton.disabled = false;
+    }
+
+    openButton.focus();
+}
+
+function getPlayerRoleIcon(role) {
+    const icons = {
+        "IGL": "♛",
+        "Líder": "♛",
+        "Fragger": "✦",
+        "Rusher": "ϟ",
+        "Support": "⬡",
+        "Sniper": "◎",
+        "Flex": "◇"
+    };
+
+    return icons[role] || "◆";
+}
 
         function renderPlayers() {
             refreshRosterOptions();
@@ -3862,21 +4009,35 @@ setText("playerProfileBooyahs", String(booyahs), "0");
 
                     <div class="roster-item-info">
                         <h4>${escapeHTML(player.nick)}</h4>
-                        <p>${escapeHTML(player.name || "Nombre no registrado")}</p>
+<p>${escapeHTML(player.name || "")}</p>
                     </div>
 
-                    <div class="roster-item-meta">
+                    <div class="roster-item-meta player-item-meta">
                         <span>${escapeHTML(player.rosterName || "Sin roster")}</span>
-                        <span>${escapeHTML(player.role || "Rol sin definir")}</span>
+                        <span class="player-card-role">
+                        <span class="player-role-icon">${getPlayerRoleIcon(player.role)}</span>
+                              ${escapeHTML(player.role || "Rol sin definir")}
+                        </span>
                         <span class="roster-status">${escapeHTML(player.status || "Sin estado")}</span>
 
-                        <button
-                            type="button"
-                            class="player-delete-button"
-                            data-delete-player="${escapeHTML(player.id)}"
-                            aria-label="Eliminar a ${escapeHTML(player.nick)}"
-                        >Eliminar</button>
-                    </div>
+<div class="player-card-actions">
+    <button
+        type="button"
+        class="player-edit-button"
+        data-edit-player="${escapeHTML(player.id)}"
+        aria-label="Editar a ${escapeHTML(player.nick)}"
+        title="Editar"
+    ><span aria-hidden="true">✎</span></button>
+
+    <button
+        type="button"
+        class="player-delete-button"
+        data-delete-player="${escapeHTML(player.id)}"
+        aria-label="Eliminar a ${escapeHTML(player.nick)}"
+        title="Eliminar"
+    ><span aria-hidden="true">🗑</span></button>
+</div>
+                        </div>
 
                     ${player.region
                         ? `<p class="roster-item-description">Región: ${escapeHTML(player.region)}</p>`
@@ -3908,6 +4069,23 @@ setText("playerProfileBooyahs", String(booyahs), "0");
 
         
         playerList.addEventListener("click", (event) => {
+
+                // Editar los datos del jugador seleccionado.
+    const editButton = event.target.closest("[data-edit-player]");
+
+    if (editButton) {
+        event.stopPropagation();
+
+        const player = state.players.find(
+            (item) => String(item.id) === editButton.dataset.editPlayer
+        );
+
+        if (player) {
+            openModal(player);
+        }
+
+        return;
+    }
             // Mantener funcionando el botón para eliminar jugadores.
             const button = event.target.closest("[data-delete-player]");
 
@@ -4034,7 +4212,9 @@ setText("playerProfileBooyahs", String(booyahs), "0");
             }
 
             const duplicateNick = state.players.some(
-                (player) => player.nick.toLowerCase() === nick.toLowerCase()
+            (player) =>
+            String(player.id) !== String(editingPlayerId) &&
+            String(player.nick || "").toLowerCase() === nick.toLowerCase()
             );
 
             if (duplicateNick) {
@@ -4052,33 +4232,75 @@ setText("playerProfileBooyahs", String(booyahs), "0");
 
             try {
                 const photoInput = $("playerPhoto");
-                const photo = await prepareImage(
-                    photoInput?.files?.[0]
-                );
+const photo = await prepareImage(
+    photoInput?.files?.[0]
+);
 
-                const row = {
-                    user_id: state.user.id,
-                    nick,
-                    name: nameInput.value.trim() || null,
-                    roster_id: Number(roster.id),
-                    roster_name: roster.name,
-                    role: roleInput.value || null,
-                    status: statusInput.value || "Activo",
-                    region: regionInput.value || null,
-                    notes: notesInput.value.trim() || null,
-                    photo: photo || null
-                };
+// Buscar el jugador que estamos editando, si existe.
+const existingPlayer = editingPlayerId
+    ? state.players.find(
+        (player) => String(player.id) === String(editingPlayerId)
+    )
+    : null;
 
-                const { data, error } = await supabaseClient
-                    .from("players")
-                    .insert(row)
-                    .select("*")
-                    .single();
+const row = {
+    user_id: state.user.id,
+    nick,
+    name: nameInput.value.trim() || null,
+    roster_id: Number(roster.id),
+    roster_name: roster.name,
+    role: roleInput.value || null,
+    status: statusInput.value || "Activo",
+    region: regionInput.value || null,
+    notes: notesInput.value.trim() || null,
 
-                if (error) throw error;
+    // Si no se selecciona otra foto, conservar la anterior.
+    photo: photo || existingPlayer?.photo || null
+};
 
-                state.players.push(mapPlayer(data));
-                saveLocalBackup();
+let data;
+let error;
+
+if (editingPlayerId) {
+    // Actualizar el jugador existente.
+    const result = await supabaseClient
+        .from("players")
+        .update(row)
+        .eq("id", editingPlayerId)
+        .select("*")
+        .single();
+
+    data = result.data;
+    error = result.error;
+} else {
+    // Registrar un jugador nuevo.
+    const result = await supabaseClient
+        .from("players")
+        .insert(row)
+        .select("*")
+        .single();
+
+    data = result.data;
+    error = result.error;
+}
+
+if (error) throw error;
+
+const updatedPlayer = mapPlayer(data);
+
+if (editingPlayerId) {
+    const playerIndex = state.players.findIndex(
+        (player) => String(player.id) === String(editingPlayerId)
+    );
+
+    if (playerIndex !== -1) {
+        state.players[playerIndex] = updatedPlayer;
+    }
+} else {
+    state.players.push(updatedPlayer);
+}
+
+saveLocalBackup();
 
                 searchInput.value = "";
                 rosterFilter.value = "";
@@ -4093,7 +4315,9 @@ setText("playerProfileBooyahs", String(booyahs), "0");
                 );
             } finally {
                 submitButton.disabled = false;
-                submitButton.textContent = "Guardar jugador";
+                submitButton.textContent = editingPlayerId
+                ? "Guardar cambios"
+                : "Guardar jugador";
             }
         });
 
@@ -5178,6 +5402,10 @@ reportsPlayerFilter?.addEventListener("change", renderSummary);
                 visibleMonth = 0;
                 visibleYear++;
             }
+
+            renderReports();
+            return;
+            
 };
 
         const dayButton = event.target.closest("[data-report-date]");

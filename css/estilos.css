@@ -1673,21 +1673,47 @@ a:focus-visible {
 /* 14. TARJETAS DE ROSTERS */
 
 .roster-list {
-    display: flex;
-    flex-direction: column;
-    gap: 13px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 175px));
+    justify-content: center;
+    gap: 18px;
 }
 
 .roster-item {
-    display: grid;
-    grid-template-columns: 48px minmax(0, 1fr) auto;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 16px;
-    padding: 19px;
-    border: 1px solid var(--borde);
-    border-radius: 12px;
-    background: var(--panel-secundario);
-    transition: border-color 0.2s ease, transform 0.2s ease;
+    justify-content: flex-start;
+    text-align: center;
+
+    width: 260px;
+    max-width: 100%;
+    margin: 0;
+    padding: 16px;
+    gap: 12px;
+
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    isolation: isolate;
+
+    background: linear-gradient(
+        145deg,
+        #191C22 0%,
+        #101216 55%,
+        #1B1A16 100%
+    );
+
+    border: 1px solid rgba(213, 163, 72, 0.25);
+
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.35);
+
+    transition:
+        border-color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .roster-item:hover {
@@ -1696,68 +1722,236 @@ a:focus-visible {
 }
 
 .roster-item-mark {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
+
+    width: 112px;
+    height: 112px;
+    min-width: 112px;
+
     overflow: hidden;
-    padding: 5px;
+    padding: 7px;
     box-sizing: border-box;
-    border: 1px solid rgba(213, 163, 72, 0.45);
-    border-radius: 10px;
-    background: linear-gradient(
-        145deg,
-        rgba(213, 163, 72, 0.18),
-        rgba(213, 163, 72, 0.04)
-    );
+
+    border: 1px solid rgba(213, 163, 72, 0.65);
+    border-radius: 13px;
+
+    background:
+        radial-gradient(
+            circle at 50% 45%,
+            rgba(213, 163, 72, 0.20),
+            transparent 70%
+        ),
+        linear-gradient(
+            145deg,
+            #202127,
+            #111315
+        );
+
     color: var(--dorado-claro);
-    font-size: 23px;
+    font-size: 32px;
     font-weight: 800;
+
+    box-shadow:
+        0 0 12px rgba(213, 163, 72, 0.16),
+        inset 0 0 14px rgba(213, 163, 72, 0.08);
+}
+
+.roster-item-mark::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            circle at 50% 50%,
+            rgba(240, 200, 117, 0.20),
+            transparent 68%
+        );
+
+    box-shadow:
+        inset 0 0 12px rgba(213, 163, 72, 0.16);
+}
+
+.roster-item-mark::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+
+    background:
+        radial-gradient(circle at 15% 20%, #F0C875 0 1px, transparent 2px),
+        radial-gradient(circle at 85% 25%, #D5A348 0 2px, transparent 3px),
+        radial-gradient(circle at 75% 85%, #F0C875 0 1px, transparent 2px),
+        linear-gradient(
+            125deg,
+            transparent 35%,
+            rgba(240, 200, 117, 0.10) 50%,
+            transparent 65%
+        );
 }
 
 .roster-team-image {
     display: block;
     width: 100%;
     height: 100%;
-    max-width: 32px;
-    max-height: 32px;
+    max-width: 52px;
+    max-height: 52px;
     object-fit: contain;
     object-position: center;
     border-radius: 5px;
 }
 
 .roster-item-info {
+    width: 100%;
     min-width: 0;
+    text-align: center;
 }
 
 .roster-item-info h4 {
-    margin: 0 0 6px;
-    overflow-wrap: anywhere;
+    margin: 0 0 5px;
     color: var(--texto);
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 750;
+    text-align: center;
+    overflow-wrap: anywhere;
 }
 
 .roster-item-info p {
     margin: 0;
-    overflow-wrap: anywhere;
     color: var(--texto-secundario);
     font-size: 12px;
+    text-align: center;
 }
 
 .roster-item-meta {
-    display: flex;
-    flex-wrap: wrap;
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, 75px);
+    justify-content: center;
+    justify-items: center;
     align-items: center;
-    justify-content: flex-end;
-    gap: 8px;
+    column-gap: 5px;
+    row-gap: 10px;
+    width: 100%;
+} 
+
+/* Distribución exclusiva de fichas de jugadores */
+.player-item-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    margin-top: 3px;
+    text-align: center;
+}
+
+.player-card-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin-top: 8px;
+}
+
+.player-card-actions .player-edit-button,
+.player-card-actions .player-delete-button {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    margin: 0;
+    padding: 0;
+}
+
+.player-item-meta > span {
+    display: block;
+    width: auto;
+    text-align: center;
+    font-size: 12px;
+}
+
+/* Roster del jugador */
+.player-item-meta > span:first-child {
+    color: var(--texto-secundario);
+    font-size: 11px;
+    font-weight: 500;
+    background: var(--panel);
+    border: 1px solid var(--borde);
+    border-radius: 6px;
+    padding: 5px 10px;
+}
+
+/* Estado del jugador */
+.player-item-meta .roster-status {
+    color: #75E5B0;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+
+    background: rgba(99, 199, 154, 0.18);
+    border: 1px solid rgba(99, 199, 154, 0.55);
+    border-radius: 20px;
+    padding: 4px 11px;
+
+    box-shadow:
+        0 0 8px rgba(99, 199, 154, 0.16),
+        inset 0 0 6px rgba(99, 199, 154, 0.08);
+}
+
+/* Rol del jugador */
+.player-item-meta .player-card-role {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: auto;
+    color: #F0C875;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.player-item-meta .player-card-role {
+    color: #F0C875;
+    font-weight: 600;
+}
+
+.player-item-meta .roster-status {
+    color: #63C79A;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.roster-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin: 0 auto;
+    position: relative;
+    left: 0;
 }
 
 .roster-item-meta > span {
-    padding: 7px 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 2px;
+    width: 75px;
+    text-align: center;
     border: 1px solid var(--borde);
     border-radius: 6px;
     color: var(--texto-secundario);
@@ -1766,13 +1960,13 @@ a:focus-visible {
 }
 
 .roster-item-meta .roster-status {
-    border-color: rgba(213, 163, 72, 0.35);
-    background: rgba(213, 163, 72, 0.09);
-    color: var(--dorado-claro);
+    border-color: rgba(99, 199, 154, 0.55);
+    background: rgba(99, 199, 154, 0.18);
+    color: #75E5B0;
 }
 
 .roster-item-description {
-    grid-column: 2 / -1;
+    grid-column: 1 / -1;
     margin: 0;
     padding-top: 13px;
     border-top: 1px solid var(--borde);
@@ -1780,6 +1974,12 @@ a:focus-visible {
     font-size: 12px;
     line-height: 1.7;
     overflow-wrap: anywhere;
+}
+
+.roster-edit-button,
+.roster-delete-button {
+    margin-left: -4px;
+    margin-right: -4px;
 }
 
 
@@ -3041,23 +3241,20 @@ a:focus-visible {
 .player-delete-button {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
     margin-top: 12px;
-    padding: 7px 11px;
+    padding: 0;
     background: transparent;
-    color: #a7a7ad;
+    color: #F0C875;
     border: 1px solid rgba(255, 255, 255, 0.10);
-    border-radius: 6px;
+    border-radius: 8px;
     font-family: inherit;
-    font-size: 12px;
+    font-size: 20px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-}
-
-.player-delete-button::before {
-    content: "⌫";
-    font-size: 15px;
 }
 
 .player-delete-button:hover {
@@ -3071,6 +3268,83 @@ a:focus-visible {
     outline-offset: 3px;
 }
 
+/* BOTÓN PARA EDITAR JUGADORES */
+
+.player-edit-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    margin-top: 12px;
+    padding: 0;
+    background: rgba(213, 163, 72, 0.08);
+    color: #F0C875;
+    border: 1px solid rgba(213, 163, 72, 0.35);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.player-edit-button:hover {
+    background: rgba(213, 163, 72, 0.18);
+    border-color: #D5A348;
+    color: #FFFFFF;
+    transform: translateY(-1px);
+}
+
+.player-edit-button:focus-visible {
+    outline: 2px solid #D5A348;
+    outline-offset: 3px;
+}
+
+/* BOTÓN PARA EDITAR ROSTERS */
+
+.roster-edit-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 6px 9px;
+    background: rgba(213, 163, 72, 0.08);
+    color: #F0C875;
+    border: 1px solid rgba(213, 163, 72, 0.35);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.roster-delete-button {
+    width: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    height: 36px;
+    padding: 0 !important;
+    font-size: 16px;
+    box-sizing: border-box;
+    justify-self: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.roster-edit-button:hover {
+    background: rgba(213, 163, 72, 0.18);
+    border-color: #D5A348;
+    color: #FFFFFF;
+    transform: translateY(-1px);
+}
+
+.roster-edit-button:focus-visible {
+    outline: 2px solid #D5A348;
+    outline-offset: 3px;
+}
 
 /* =========================================
    VENTANA DE CONFIRMACIÓN PARA ELIMINAR
@@ -3239,12 +3513,6 @@ a:focus-visible {
         border-color 0.25s ease,
         transform 0.25s ease,
         box-shadow 0.25s ease;
-}
-
-.roster-delete-button::before {
-    content: "×";
-    font-size: 18px;
-    line-height: 12px;
 }
 
 .roster-delete-button:hover {
@@ -4078,6 +4346,187 @@ a:focus-visible {
 .player-item:focus-visible {
     outline: 2px solid #D5A348;
     outline-offset: 3px;
+}
+
+/* LOPZEK — TARJETAS TIPO PERFIL */
+
+.player-item {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 260px;
+    max-width: 100%;
+    margin: 0;
+    padding: 12px;
+    gap: 12px;
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+isolation: isolate;
+background: linear-gradient(
+    145deg,
+    #191C22 0%,
+    #101216 55%,
+    #1B1A16 100%
+);
+border: 1px solid rgba(213, 163, 72, 0.25);
+box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.player-item .player-mark {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    min-width: 0;
+    margin: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    isolation: isolate;
+
+    background:
+        radial-gradient(
+            ellipse at 50% 45%,
+            rgba(213, 163, 72, 0.28),
+            transparent 60%
+        ),
+        linear-gradient(
+            180deg,
+            #191C22,
+            #08090D 75%
+        );
+
+    border: 1px solid rgba(213, 163, 72, 0.55);
+
+    box-shadow:
+        inset 0 0 30px rgba(0, 0, 0, 0.75),
+        0 0 14px rgba(213, 163, 72, 0.12);
+}
+
+.roster-item-mark::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            ellipse at 50% 100%,
+            rgba(240, 200, 117, 0.48),
+            rgba(213, 163, 72, 0.15) 28%,
+            transparent 65%
+        ),
+        radial-gradient(
+            ellipse at 15% 65%,
+            rgba(213, 163, 72, 0.25),
+            transparent 35%
+        ),
+        radial-gradient(
+            ellipse at 85% 65%,
+            rgba(213, 163, 72, 0.22),
+            transparent 35%
+        );
+
+    filter: blur(8px);
+}
+
+.roster-item-mark::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            115deg,
+            transparent 12%,
+            rgba(240, 200, 117, 0.0) 25%,
+            rgba(240, 200, 117, 0.30) 27%,
+            transparent 29%
+        ),
+        linear-gradient(
+            65deg,
+            transparent 72%,
+            rgba(213, 163, 72, 0.28) 74%,
+            transparent 76%
+        ),
+        radial-gradient(
+            ellipse at 10% 100%,
+            rgba(213, 163, 72, 0.55),
+            transparent 48%
+        ),
+        radial-gradient(
+            ellipse at 90% 100%,
+            rgba(240, 200, 117, 0.48),
+            transparent 48%
+        );
+
+    filter: blur(5px);
+    mix-blend-mode: screen;
+}
+
+.player-item .roster-item-info {
+    width: 100%;
+    min-width: 0;
+    text-align: center;
+}
+
+.player-item .roster-item-info h4 {
+    font-size: 15px;
+    font-weight: 750;
+    margin-bottom: 4px;
+}
+
+.player-item .roster-item-info p {
+    font-size: 11px;
+    color: var(--texto-secundario);
+}
+
+.player-item .roster-item-meta.player-item-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    justify-items: center;
+    gap: 10px;
+    width: 100%;
+    text-align: center;
+}
+
+.player-item .roster-item-meta.player-item-meta > span:first-child {
+    grid-column: 1 / -1;
+}
+
+.player-item .roster-item-meta.player-item-meta > .roster-status {
+    grid-column: 1 / -1;
+}
+
+.player-item .roster-item-meta.player-item-meta > .player-card-role {
+    grid-column: 1 / -1;
+}
+
+.player-item .player-card-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.player-item .player-card-actions {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.player-item .roster-item-description {
+    margin: 0;
+    text-align: center;
+    font-size: 11px;
 }
 
 /* =========================================
@@ -7776,6 +8225,45 @@ a:focus-visible {
     }
 }
 
+/* ICONOS DE ROLES — TARJETAS DE JUGADORES */
+
+.player-card-role {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.player-role-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: rgba(213, 163, 72, 0.12);
+    color: #F0C875;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* LOPZEK — CUADRÍCULA DE PERFILES DE JUGADORES */
+
+#playerList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 240px));
+    justify-content: center;
+    align-items: start;
+    gap: 20px;
+    width: 100%;
+}
+
+#playerList > .player-item {
+    width: 240px;
+    max-width: 240px;
+    min-height: 295px;
+    box-sizing: border-box;
+}
 
 /* =========================================================
    FIN DE ESTILOS LOPZEK
