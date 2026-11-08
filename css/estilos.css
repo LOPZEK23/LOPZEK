@@ -2004,11 +2004,12 @@ a:focus-visible {
 
 .modal-roster-contenido {
     position: relative;
-    width: 100%;
-    max-width: 780px;
-    max-height: 90vh;
+    width: 96%;
+    max-width: 1400px;
+    max-height: 92vh;
     overflow-y: auto;
     padding: 34px;
+    box-sizing: border-box;
     color: #F5F5F5;
     background: #111315;
     border: 1px solid rgba(201, 154, 85, 0.4);
@@ -2147,42 +2148,57 @@ a:focus-visible {
 
 .detalle-roster-jugador {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 14px;
-    padding: 14px;
-    background: #1A1D21;
+    justify-content: center;
+    width: 190px;
+    max-width: 100%;
+    padding: 16px 12px;
+    gap: 10px;
+    background: #191C22;
     border: 1px solid #303338;
-    border-left: 3px solid #E13A43;
-    border-radius: 10px;
+    border-top: 2px solid #D5A348;
+    border-radius: 12px;
+    text-align: center;
+    box-sizing: border-box;
 }
 
 .detalle-roster-jugador-avatar {
-    display: grid;
-    place-items: center;
+    width: 90px;
+    height: 90px;
     flex-shrink: 0;
-    width: 42px;
-    height: 42px;
-    color: #111315;
-    background: #C99A55;
-    border-radius: 10px;
-    font-weight: 900;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #111315;
+}
+
+.detalle-roster-jugador-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .detalle-roster-jugador-info {
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    text-align: center;
 }
 
 .detalle-roster-jugador-info strong {
-    color: #FFFFFF;
+    color: #F0C875;
+    text-align: center;
     overflow-wrap: anywhere;
 }
 
 .detalle-roster-jugador-info span {
     color: #A7A9AD;
     font-size: 12px;
+    text-align: center;
 }
 
 .detalle-roster-sin-jugadores {
@@ -2195,15 +2211,21 @@ a:focus-visible {
     border-radius: 10px;
 }
 
-
-/* 16. DASHBOARD COMPETITIVO DE ROSTERS */
+.roster-detail-players-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 16px;
+    width: 100%;
+    align-items: start;
+}
 
 .dashboard-roster {
-    width: min(1100px, 94vw);
-    max-width: 1100px;
-    max-height: 90vh;
+    width: 96%;
+    max-width: 1500px;
+    max-height: 92vh;
     overflow-y: auto;
-    padding: 32px;
+    padding: 36px;
+    box-sizing: border-box;
     background: #111316;
     color: #F5F5F5;
     border: 1px solid rgba(201, 154, 85, 0.35);
@@ -2420,7 +2442,12 @@ a:focus-visible {
     box-sizing: border-box;
 }
 
-.dashboard-roster-rankings,
+.dashboard-roster-rankings {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
 .dashboard-roster-graficas {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2429,31 +2456,31 @@ a:focus-visible {
 
 .dashboard-roster-panel {
     min-width: 0;
-    padding: 20px;
+    padding: 12px;
     border: 1px solid #30343A;
-    border-radius: 12px;
+    border-radius: 10px;
     background: #191B20;
 }
 
 .dashboard-roster-panel h4 {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin: 0 0 20px;
+    gap: 7px;
+    margin: 0 0 12px;
     color: #F5F5F5;
-    font-size: 15px;
+    font-size: 13px;
 }
 
 .dashboard-roster-panel h4 > span {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
+    width: 25px;
+    height: 25px;
+    border-radius: 7px;
     background: rgba(201, 154, 85, 0.13);
     color: #C99A55;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .dashboard-roster-ranking-lista {
@@ -2468,17 +2495,18 @@ a:focus-visible {
 .dashboard-roster-ranking-item {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     min-width: 0;
-    padding: 12px;
+    padding: 11px 10px;
+    min-height: 58px;
     border: 1px solid #30343A;
     border-radius: 10px;
-    background: linear-gradient(110deg, #22252B, #191B20);
+    background: linear-gradient(110deg, #252830, #191B20);
     transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
 .dashboard-roster-ranking-item:hover {
-    border-color: rgba(201, 154, 85, 0.65);
+    border-color: rgba(201, 154, 85, 0.75);
     transform: translateY(-2px);
 }
 
@@ -2488,34 +2516,31 @@ a:focus-visible {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex: 0 0 32px;
-    width: 32px;
-    height: 32px;
+    flex: 0 0 30px;
+    width: 30px;
+    height: 30px;
     border: 1px solid #393D43;
     border-radius: 8px;
     background: #15171A;
     color: #B8BBC2;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 900;
 }
 
 /* Primeros tres puestos */
 
-.dashboard-roster-ranking-item:nth-child(1)
-.dashboard-roster-ranking-pos {
+.dashboard-roster-ranking-item:nth-child(1) .dashboard-roster-ranking-pos {
     border-color: #C99A55;
     background: rgba(201, 154, 85, 0.16);
     color: #F0C674;
 }
 
-.dashboard-roster-ranking-item:nth-child(2)
-.dashboard-roster-ranking-pos {
+.dashboard-roster-ranking-item:nth-child(2) .dashboard-roster-ranking-pos {
     border-color: #858B96;
     color: #D9DDE4;
 }
 
-.dashboard-roster-ranking-item:nth-child(3)
-.dashboard-roster-ranking-pos {
+.dashboard-roster-ranking-item:nth-child(3) .dashboard-roster-ranking-pos {
     border-color: #986C4D;
     color: #D9A17A;
 }
@@ -2523,9 +2548,9 @@ a:focus-visible {
 /* Foto del jugador */
 
 .dashboard-roster-ranking-foto {
-    flex: 0 0 46px;
-    width: 46px;
-    height: 46px;
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
     overflow: hidden;
     border: 2px solid #393D43;
     border-radius: 50%;
@@ -2543,7 +2568,7 @@ a:focus-visible {
 
 .dashboard-roster-ranking-info {
     display: flex;
-    flex: 1;
+    flex: 1 1 0;
     flex-direction: column;
     gap: 5px;
     min-width: 0;
@@ -2552,7 +2577,7 @@ a:focus-visible {
 .dashboard-roster-ranking-info strong {
     overflow: hidden;
     color: #F5F5F5;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 800;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -2560,8 +2585,8 @@ a:focus-visible {
 
 .dashboard-roster-ranking-info small {
     overflow: hidden;
-    color: #9297A0;
-    font-size: 11px;
+    color: #A0A5AE;
+    font-size: 10px;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -2579,24 +2604,24 @@ a:focus-visible {
 
 .dashboard-roster-ranking-valor strong {
     color: #E6B765;
-    font-size: 19px;
+    font-size: 17px;
     font-weight: 900;
     font-variant-numeric: tabular-nums;
 }
 
 .dashboard-roster-ranking-valor small {
-    color: #9297A0;
+    color: #A0A5AE;
     font-size: 9px;
     font-weight: 800;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.4px;
 }
 
 .dashboard-roster-vacio {
     margin: 0;
-    padding: 20px 12px;
+    padding: 24px 14px;
     border: 1px dashed #3B3E45;
-    border-radius: 8px;
-    color: #9297A0;
+    border-radius: 9px;
+    color: #A0A5AE;
     font-size: 13px;
     line-height: 1.6;
     text-align: center;
@@ -2607,9 +2632,8 @@ a:focus-visible {
     flex-direction: column;
     justify-content: center;
     gap: 14px;
-    min-height: 180px;
+    min-height: 200px;
 }
-
 
 /* =====================================================
    LOPZEK — GRÁFICAS COMPARATIVAS PREMIUM
@@ -8263,6 +8287,737 @@ box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     max-width: 240px;
     min-height: 295px;
     box-sizing: border-box;
+}
+
+
+/* SELECTOR DE PERÍODO DE LOS RANKINGS */
+
+.dashboard-roster-filtros {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: 18px 0 20px;
+    padding: 13px 15px;
+    border: 1px solid #30343A;
+    border-radius: 12px;
+    background: linear-gradient(110deg, #1C1F25, #15171B);
+}
+
+.dashboard-roster-periodos {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.ranking-periodo-btn {
+    padding: 9px 17px;
+    border: 1px solid #393D43;
+    border-radius: 8px;
+    background: #202329;
+    color: #AEB3BC;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.7px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ranking-periodo-btn:hover {
+    border-color: #C99A55;
+    color: #F0C875;
+}
+
+.ranking-periodo-btn.active {
+    border-color: #C99A55;
+    background: linear-gradient(135deg, #76552B, #44321D);
+    color: #FFE0A0;
+    box-shadow: 0 0 12px rgba(201, 154, 85, 0.15);
+}
+
+.dashboard-roster-navegacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.dashboard-roster-navegacion button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid #393D43;
+    border-radius: 8px;
+    background: #202329;
+    color: #E6B765;
+    font-size: 23px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dashboard-roster-navegacion button:hover {
+    border-color: #C99A55;
+    background: #30271D;
+}
+
+.dashboard-roster-navegacion strong {
+    min-width: 150px;
+    color: #F0C875;
+    font-size: 12px;
+    text-align: center;
+}
+
+.dashboard-roster-navegacion input[type="date"] {
+    width: 135px;
+    padding: 7px;
+    border: 1px solid #393D43;
+    border-radius: 7px;
+    outline: none;
+    background: #202329;
+    color: #E5E5E5;
+    color-scheme: dark;
+    font-size: 11px;
+}
+
+@media (max-width: 700px) {
+    .dashboard-roster-filtros {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .dashboard-roster-periodos {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .ranking-periodo-btn {
+        padding: 9px 5px;
+    }
+
+    .dashboard-roster-navegacion {
+        flex-wrap: wrap;
+    }
+}
+
+
+
+/* ==========================================
+   COMPARATIVA DE JUGADORES - LOPZEK
+========================================== */
+
+.roster-player-comparison {
+    display: grid;
+    grid-template-columns: minmax(280px, 1.3fr) minmax(340px, 1.2fr) minmax(280px, 1.3fr);
+    align-items: center;
+    gap: 24px;
+    margin-top: 22px;
+    padding: 30px;
+    border: 1px solid #343941;
+    border-radius: 16px;
+    background: linear-gradient(145deg, #1D2026, #131519);
+}
+
+/* TARJETAS DE JUGADORES */
+.comparison-player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-width: 0;
+    width: 100%;
+    gap: 16px;
+    padding: 20px 10px;
+}
+
+.comparison-player-photo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 320px;
+    height: 360px;
+    overflow: hidden;
+    border: 1px solid #8C642F;
+    border-radius: 14px;
+    background: linear-gradient(145deg, #292D34, #17191E);
+    color: #D5A348;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.comparison-player-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.comparison-player-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.comparison-player h4 {
+    margin: 2px 0 0;
+    color: #F0C875;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.comparison-player p {
+    margin: 0;
+    color: #AEB3BC;
+    font-size: 11px;
+}
+
+.comparison-player button {
+    padding: 10px 15px;
+    border: 1px solid #A77C42;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #76552B, #44321D);
+    color: #FFE0A0;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.comparison-player button:hover {
+    border-color: #F0C875;
+    transform: translateY(-2px);
+}
+
+.comparison-player-a .comparison-player-photo,
+.comparison-player-b .comparison-player-photo {
+    border-color: #8C642F;
+    box-shadow: 0 0 22px rgba(213, 163, 72, 0.13);
+}
+
+/* COMPARACIÓN CENTRAL */
+.comparison-center {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    min-width: 0;
+}
+
+.comparison-center-heading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #AEB3BC;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+}
+
+.comparison-center-heading strong {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid #A77C42;
+    border-radius: 50%;
+    background: #28221A;
+    color: #F0C875;
+    font-size: 16px;
+}
+
+#comparisonStatsBars {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.comparison-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.comparison-stat-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    color: #D8DCE2;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.comparison-stat-label strong {
+    color: #F0C875;
+    font-size: 11px;
+}
+
+.comparison-stat-bar {
+    display: flex;
+    width: 100%;
+    height: 11px;
+    overflow: hidden;
+    border-radius: 20px;
+    background: #292D34;
+    gap: 2px;
+}
+
+.comparison-bar-a {
+    display: block;
+    width: 50%;
+    background: linear-gradient(90deg, #8C642F, #F0C875);
+    transition: width 0.35s ease;
+}
+
+.comparison-bar-b {
+    display: block;
+    width: 50%;
+    background: linear-gradient(90deg, #B18443, #D5A348);
+    transition: width 0.35s ease;
+}
+
+/* ESTADÍSTICAS DE PARTIDA */
+.comparison-match-section {
+    margin-top: 28px;
+    padding: 22px;
+    border: 1px solid #343941;
+    border-radius: 14px;
+    background: #191C22;
+}
+
+/* ==========================================
+   VENTANA DE SELECCIÓN DE JUGADORES
+========================================== */
+
+.comparison-selector-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(5, 7, 10, 0.88);
+    backdrop-filter: blur(9px);
+}
+
+.comparison-selector-window {
+    width: min(850px, 100%);
+    max-height: 80vh;
+    overflow-y: auto;
+    margin: 0 auto;
+    padding: 24px;
+    border: 1px solid #6E542F;
+    border-radius: 16px;
+    background: linear-gradient(145deg, #20232A, #121418);
+    box-shadow: 0 20px 70px rgba(0, 0, 0, 0.55);
+}
+
+.comparison-selector-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+}
+
+.comparison-selector-header span {
+    color: #D5A348;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+
+.comparison-selector-header h3 {
+    margin: 6px 0 0;
+    color: #F0C875;
+    font-size: 21px;
+}
+
+.comparison-selector-close {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #51432F;
+    border-radius: 8px;
+    background: #29251F;
+    color: #F0C875;
+    font-size: 23px;
+    cursor: pointer;
+}
+
+
+/* CUADRÍCULA DE JUGADORES */
+.comparison-selector-list {
+    display: grid;
+    grid-template-columns: repeat(4, 145px);
+    justify-content: center;
+    justify-items: center;
+    align-items: start;
+    gap: 18px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.comparison-selector-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    width: 145px;
+    min-height: 155px;
+    padding: 12px;
+    border: 1px solid #343941;
+    border-radius: 12px;
+    background: linear-gradient(145deg, #252932, #191C22);
+    color: #E8E9EC;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.comparison-selector-option:hover {
+    border-color: #D5A348;
+    background: #30291F;
+    transform: translateY(-3px);
+}
+
+.comparison-selector-option img {
+    width: 75px;
+    height: 75px;
+    object-fit: cover;
+    border-radius: 9px;
+    border: 1px solid #8C642F;
+}
+
+.comparison-selector-option strong {
+    color: #F0C875;
+    font-size: 12px;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+.comparison-selector-option small {
+    color: #AEB3BC;
+    font-size: 10px;
+    text-align: center;
+}
+
+@media (max-width: 650px) {
+    .comparison-selector-list {
+        grid-template-columns: repeat(2, 145px);
+    }
+}
+
+/* DISEÑO RESPONSIVE */
+@media (max-width: 760px) {
+    .roster-player-comparison {
+        grid-template-columns: 1fr 1fr;
+        gap: 24px 12px;
+        padding: 16px;
+    }
+
+    .comparison-center {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .comparison-player-photo {
+        width: 85px;
+        height: 95px;
+    }
+
+    .comparison-player h4 {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .comparison-selector-window {
+        padding: 16px;
+    }
+
+    .comparison-selector-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* ==========================================
+   FICHAS INDIVIDUALES - ESTADÍSTICAS DE PARTIDA
+========================================== */
+
+.comparison-match-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Selector de partida */
+
+.comparison-match-selector {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.comparison-match-selector label {
+    color: #F0C875;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.comparison-match-selector select {
+    flex: 1;
+    min-width: 220px;
+    padding: 12px 14px;
+    color: #F2F2F2;
+    background: #191C22;
+    border: 1px solid #55452F;
+    border-radius: 9px;
+}
+
+/* Información del mapa */
+
+.comparison-match-map {
+    padding: 12px;
+    color: #F0C875;
+    background: #191C22;
+    border: 1px solid #343941;
+    border-radius: 9px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* Dos fichas enfrentadas */
+
+.comparison-match-players {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+    width: 100%;
+    align-items: stretch;
+}
+
+.comparison-match-player {
+    min-width: 0;
+    padding: 20px;
+    background: linear-gradient(145deg, #20242B, #15181D);
+    border: 1px solid #49402F;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Encabezado de cada jugador */
+
+.comparison-match-player-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 17px;
+    border-bottom: 1px solid #393B40;
+}
+
+.comparison-match-player-header img {
+    width: 100px;
+    height: 100px;
+    flex-shrink: 0;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 2px solid #D5A348;
+}
+
+.comparison-match-player-header div {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+
+.comparison-match-player-header span {
+    color: #D5A348;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+}
+
+.comparison-match-player-header strong {
+    color: #F2F2F2;
+    font-size: 18px;
+    overflow-wrap: anywhere;
+}
+
+/* Estadísticas individuales */
+
+.comparison-match-player-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.comparison-match-player-metric {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    min-height: 65px;
+    padding: 10px 12px;
+    background: #191C22;
+    border: 1px solid #343941;
+    border-radius: 9px;
+}
+
+.comparison-match-player-metric span {
+    color: #AEB4BF;
+    font-size: 11px;
+}
+
+.comparison-match-player-metric strong {
+    color: #F0C875;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.comparison-match-player-metric small {
+    color: #9299A5;
+    font-size: 10px;
+}
+
+.comparison-match-player-metric span {
+    color: #AEB4BF;
+    font-size: 12px;
+}
+
+.comparison-match-player-metric strong {
+    color: #F0C875;
+    font-size: 21px;
+    font-weight: 800;
+}
+
+/* Adaptación para pantallas pequeñas */
+
+@media (max-width: 650px) {
+    .comparison-match-players {
+        grid-template-columns: 1fr;
+    }
+
+    .comparison-match-player-header img {
+        width: 82px;
+        height: 82px;
+    }
+}
+
+@media (max-width: 450px) {
+    .comparison-match-selector {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .comparison-match-selector select {
+        width: 100%;
+    }
+}
+
+
+/* ==========================================
+   FILTROS DE PERÍODO - COMPARACIÓN
+========================================== */
+
+.comparison-match-filters {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr 1fr;
+    gap: 16px;
+    width: 100%;
+    padding: 18px;
+    background: #191C22;
+    border: 1px solid #343941;
+    border-radius: 12px;
+}
+
+.comparison-match-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    min-width: 0;
+}
+
+.comparison-match-filter label {
+    color: #D5A348;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+}
+
+.comparison-match-filter select,
+.comparison-match-filter input {
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
+    color: #F2F2F2;
+    background: #111315;
+    border: 1px solid #55452F;
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    color-scheme: dark;
+}
+
+.comparison-match-filter select:focus,
+.comparison-match-filter input:focus {
+    border-color: #D5A348;
+    box-shadow: 0 0 0 2px rgba(213, 163, 72, 0.12);
+}
+
+@media (max-width: 650px) {
+    .comparison-match-filters {
+        grid-template-columns: 1fr;
+    }
+}
+
+.detalle-roster-jugador-etiquetas {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+}
+
+.jugador-rol-etiqueta {
+    padding: 5px 10px;
+    color: #F0C875 !important;
+    background: rgba(213, 163, 72, 0.12);
+    border: 1px solid rgba(213, 163, 72, 0.35);
+    border-radius: 20px;
+    font-size: 10px !important;
+    font-weight: 700;
+}
+
+.jugador-estado-etiqueta {
+    padding: 5px 10px;
+    color: #8ED6A5 !important;
+    background: rgba(75, 180, 110, 0.12);
+    border: 1px solid rgba(75, 180, 110, 0.3);
+    border-radius: 20px;
+    font-size: 10px !important;
+    font-weight: 700;
+}
+
+.detalle-roster-nombre-real {
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
+.detalle-roster-jugador-info strong {
+    display: block;
+    width: 100%;
+    text-align: center;
 }
 
 /* =========================================================

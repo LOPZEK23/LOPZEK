@@ -798,84 +798,289 @@
     </div>
 </section>
 
-        <!-- RANKINGS -->
-        <section class="dashboard-roster-seccion">
-            <div class="dashboard-roster-titulo">
-                <span>02 / RANKINGS</span>
-                <h3>Rendimiento individual</h3>
-            </div>
+        
 
-            <div class="dashboard-roster-rankings">
-                <article class="dashboard-roster-panel">
-                    <h4></span> Top de kills</h4>
-                    <div id="rosterDetailKillsRanking"
-                        class="dashboard-roster-ranking-lista">
-                        <p class="dashboard-roster-vacio">
-                            Las estadísticas aparecerán cuando registres partidas.
-                        </p>
-                    </div>
-                </article>
+<!-- RANKINGS -->
+<section class="dashboard-roster-seccion">
+    <div class="dashboard-roster-titulo">
+        <span>02 / RANKINGS</span>
+        <h3>Rendimiento individual</h3>
+    </div>
 
-                <article class="dashboard-roster-panel">
-                    <h4></span> Top de daño</h4>
-                    <div id="rosterDetailDamageRanking"
-                        class="dashboard-roster-ranking-lista">
-                        <p class="dashboard-roster-vacio">
-                            Las estadísticas aparecerán cuando registres partidas.
-                        </p>
-                    </div>
-                </article>
-            </div>
-        </section>
+    <!-- SELECTOR DE PERÍODO -->
+    <div class="dashboard-roster-filtros">
 
-        <!-- GRÁFICAS -->
-        <section class="dashboard-roster-seccion">
-            <div class="dashboard-roster-titulo">
-                <span>03 / ANÁLISIS</span>
-                <h3>Comparativa de jugadores</h3>
-            </div>
+        <div class="dashboard-roster-periodos">
+            <button type="button"
+                class="ranking-periodo-btn active"
+                data-ranking-period="day">DÍA</button>
 
-            <div class="dashboard-roster-graficas">
-                <article class="dashboard-roster-panel">
-                    <h4>Kills por jugador</h4>
-                    <div id="rosterDetailKillsChart"
-                        class="dashboard-roster-chart">
-                        <p class="dashboard-roster-vacio">
-                            Sin datos para graficar.
-                        </p>
-                    </div>
-                </article>
+            <button type="button"
+                class="ranking-periodo-btn"
+                data-ranking-period="week">SEMANA</button>
 
-                <article class="dashboard-roster-panel">
-                    <h4>Daño por jugador</h4>
-                    <div id="rosterDetailDamageChart"
-                        class="dashboard-roster-chart">
-                        <p class="dashboard-roster-vacio">
-                            Sin datos para graficar.
-                        </p>
-                    </div>
-                </article>
-            </div>
-        </section>
+            <button type="button"
+                class="ranking-periodo-btn"
+                data-ranking-period="month">MES</button>
 
-        <!-- DESCRIPCIÓN Y JUGADORES -->
-        <section class="dashboard-roster-seccion">
-            <div class="dashboard-roster-titulo">
-                <span>04 / PLANTILLA</span>
-                <h3>Jugadores del roster</h3>
-            </div>
+            <button type="button"
+                class="ranking-periodo-btn"
+                data-ranking-period="year">AÑO</button>
+        </div>
 
-            <p id="rosterDetailDescription" class="dashboard-roster-descripcion">
-                Este roster todavía no tiene una descripción.
-            </p>
+        <div class="dashboard-roster-navegacion">
+            <button type="button"
+                id="rankingPeriodPrev"
+                aria-label="Período anterior">‹</button>
 
-            <div id="rosterDetailPlayersList"
-                class="detalle-roster-lista-jugadores">
+            <strong id="rankingPeriodLabel">
+                Selecciona una fecha
+            </strong>
+
+            <button type="button"
+                id="rankingPeriodNext"
+                aria-label="Período siguiente">›</button>
+
+            <input type="date"
+                id="rankingPeriodDate"
+                aria-label="Seleccionar fecha">
+        </div>
+
+    </div>
+
+    <!-- CUATRO RANKINGS -->
+    <div class="dashboard-roster-rankings">
+
+        <article class="dashboard-roster-panel">
+            <h4>Top de kills</h4>
+            <div id="rosterDetailKillsRanking"
+                class="dashboard-roster-ranking-lista">
                 <p class="dashboard-roster-vacio">
-                    Todavía no hay jugadores vinculados a este roster.
+                    Las estadísticas aparecerán cuando registres partidas.
                 </p>
             </div>
-        </section>
+        </article>
+
+        <article class="dashboard-roster-panel">
+            <h4>Top de daño</h4>
+            <div id="rosterDetailDamageRanking"
+                class="dashboard-roster-ranking-lista">
+                <p class="dashboard-roster-vacio">
+                    Las estadísticas aparecerán cuando registres partidas.
+                </p>
+            </div>
+        </article>
+
+        <article class="dashboard-roster-panel">
+            <h4>Top de asistencias</h4>
+            <div id="rosterDetailAssistsRanking"
+                class="dashboard-roster-ranking-lista">
+                <p class="dashboard-roster-vacio">
+                    Las estadísticas aparecerán cuando registres partidas.
+                </p>
+            </div>
+        </article>
+
+        <article class="dashboard-roster-panel">
+            <h4>Top de muertes</h4>
+            <div id="rosterDetailDeathsRanking"
+                class="dashboard-roster-ranking-lista">
+                <p class="dashboard-roster-vacio">
+                    Las estadísticas aparecerán cuando registres partidas.
+                </p>
+            </div>
+        </article>
+
+    </div>
+</section>
+
+        
+<!-- COMPARATIVA DE JUGADORES -->
+<section class="dashboard-roster-seccion">
+
+    <div class="dashboard-roster-titulo">
+        <span>03 / ANÁLISIS</span>
+        <h3>Comparativa de jugadores</h3>
+    </div>
+
+    <div class="roster-player-comparison">
+
+        <!-- JUGADOR A -->
+        <article class="comparison-player comparison-player-a">
+            <div class="comparison-player-photo" id="comparisonPlayerAPhoto">
+                <span>JUGADOR A</span>
+            </div>
+
+            <h4 id="comparisonPlayerAName">Seleccionar jugador</h4>
+            <p id="comparisonPlayerARole">Sin jugador seleccionado</p>
+
+            <button type="button" id="selectComparisonPlayerA">
+                Seleccionar jugador
+            </button>
+        </article>
+
+        <!-- COMPARACIÓN CENTRAL -->
+        <div class="comparison-center">
+
+            <div class="comparison-center-heading">
+                <span>COMPARACIÓN</span>
+                <strong>VS</strong>
+            </div>
+
+            <div id="comparisonStatsBars">
+
+                <div class="comparison-stat">
+    <div class="comparison-stat-label">
+        <span>PARTIDAS JUGADAS</span>
+        <strong id="comparisonMatchesValues">0 - 0</strong>
+    </div>
+    <div class="comparison-stat-bar">
+        <span class="comparison-bar-a" id="comparisonMatchesA"></span>
+        <span class="comparison-bar-b" id="comparisonMatchesB"></span>
+    </div>
+</div>
+
+<div class="comparison-stat">
+    <div class="comparison-stat-label">
+        <span>KILLS TOTALES</span>
+        <strong id="comparisonKillsValues">0 - 0</strong>
+    </div>
+    <div class="comparison-stat-bar">
+        <span class="comparison-bar-a" id="comparisonKillsA"></span>
+        <span class="comparison-bar-b" id="comparisonKillsB"></span>
+    </div>
+</div>
+
+<div class="comparison-stat">
+    <div class="comparison-stat-label">
+        <span>KILLS POR PARTIDA</span>
+        <strong id="comparisonKillsAverageValues">0 - 0</strong>
+    </div>
+    <div class="comparison-stat-bar">
+        <span class="comparison-bar-a" id="comparisonKillsAverageA"></span>
+        <span class="comparison-bar-b" id="comparisonKillsAverageB"></span>
+    </div>
+</div>
+
+<div class="comparison-stat">
+    <div class="comparison-stat-label">
+        <span>DAÑO TOTAL</span>
+        <strong id="comparisonDamageValues">0 - 0</strong>
+    </div>
+    <div class="comparison-stat-bar">
+        <span class="comparison-bar-a" id="comparisonDamageA"></span>
+        <span class="comparison-bar-b" id="comparisonDamageB"></span>
+    </div>
+</div>
+
+<div class="comparison-stat">
+    <div class="comparison-stat-label">
+        <span>DAÑO POR PARTIDA</span>
+        <strong id="comparisonDamageAverageValues">0 - 0</strong>
+    </div>
+    <div class="comparison-stat-bar">
+        <span class="comparison-bar-a" id="comparisonDamageAverageA"></span>
+        <span class="comparison-bar-b" id="comparisonDamageAverageB"></span>
+    </div>
+</div>
+
+<div class="comparison-stat">
+    <div class="comparison-stat-label">
+        <span>ASISTENCIAS</span>
+        <strong id="comparisonAssistsValues">0 - 0</strong>
+    </div>
+    <div class="comparison-stat-bar">
+        <span class="comparison-bar-a" id="comparisonAssistsA"></span>
+        <span class="comparison-bar-b" id="comparisonAssistsB"></span>
+    </div>
+</div>
+
+<div class="comparison-stat">
+    <div class="comparison-stat-label">
+        <span>DERRIBOS</span>
+        <strong id="comparisonKnockdownsValues">0 - 0</strong>
+    </div>
+    <div class="comparison-stat-bar">
+        <span class="comparison-bar-a" id="comparisonKnockdownsA"></span>
+        <span class="comparison-bar-b" id="comparisonKnockdownsB"></span>
+    </div>
+</div>
+
+<div class="comparison-stat">
+    <div class="comparison-stat-label">
+        <span>MUERTES</span>
+        <strong id="comparisonDeathsValues">0 - 0</strong>
+    </div>
+    <div class="comparison-stat-bar">
+        <span class="comparison-bar-a" id="comparisonDeathsA"></span>
+        <span class="comparison-bar-b" id="comparisonDeathsB"></span>
+    </div>
+</div>
+
+<div class="comparison-stat">
+    <div class="comparison-stat-label">
+        <span>POSICIÓN PROMEDIO</span>
+        <strong id="comparisonPositionAverageValues">0 - 0</strong>
+    </div>
+    <div class="comparison-stat-bar">
+        <span class="comparison-bar-a" id="comparisonPositionAverageA"></span>
+        <span class="comparison-bar-b" id="comparisonPositionAverageB"></span>
+    </div>
+</div>
+
+            </div>
+        </div>
+
+        <!-- JUGADOR B -->
+        <article class="comparison-player comparison-player-b">
+            <div class="comparison-player-photo" id="comparisonPlayerBPhoto">
+                <span>JUGADOR B</span>
+            </div>
+
+            <h4 id="comparisonPlayerBName">Seleccionar jugador</h4>
+            <p id="comparisonPlayerBRole">Sin jugador seleccionado</p>
+
+            <button type="button" id="selectComparisonPlayerB">
+                Seleccionar jugador
+            </button>
+        </article>
+
+    </div>
+
+    <!-- ESTADÍSTICAS DE PARTIDA -->
+    <div class="comparison-match-section">
+        <div class="dashboard-roster-titulo">
+            <span>DETALLE DE RENDIMIENTO</span>
+            <h3>Estadísticas de partida</h3>
+        </div>
+
+        <div id="comparisonMatchStats">
+            <p class="dashboard-roster-vacio">
+                Selecciona dos jugadores para comparar sus estadísticas.
+            </p>
+        </div>
+    </div>
+
+</section>
+
+<!-- PLANTILLA DEL ROSTER -->
+<section class="dashboard-roster-seccion">
+
+    <div class="dashboard-roster-titulo">
+        <span>04 / PLANTILLA</span>
+        <h3>Jugadores del equipo</h3>
+    </div>
+
+    <div id="rosterDetailPlayersList"
+         class="roster-detail-players-list">
+
+        <p class="dashboard-roster-vacio">
+            Cargando jugadores de la plantilla...
+        </p>
+
+    </div>
+
+</section>
 
     </div>
 </div>

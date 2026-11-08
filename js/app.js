@@ -1331,6 +1331,41 @@ function renderDashboardKillsDistribution() {
     });
 }
 
+async function fetchAllMatchPlayerStats() {
+    const pageSize = 1000;
+    let allRows = [];
+    let from = 0;
+
+    while (true) {
+        const { data, error } = await supabaseClient
+            .from("match_player_stats")
+            .select("*")
+            .order("match_date", { ascending: false })
+            .order("id", { ascending: true })
+            .range(from, from + pageSize - 1);
+
+        if (error) throw error;
+
+        allRows.push(...(data || []));
+
+        if (!data || data.length < pageSize) {
+            break;
+        }
+
+        from += pageSize;
+    }
+
+    console.log(
+        "TOTAL DE REGISTROS CARGADOS:",
+        allRows.length
+    );
+
+    return {
+        data: allRows,
+        error: null
+    };
+}
+
     async function loadDataFromSupabase() {
         if (state.loading) return;
 
@@ -1355,11 +1390,10 @@ function renderDashboardKillsDistribution() {
         .select("*")
         .order("created_at", { ascending: true }),
 
-    supabaseClient
-        .from("match_player_stats")
-        .select("*")
-        .order("match_date", { ascending: false })
+    fetchAllMatchPlayerStats()
 ]);
+
+console.log("REGISTROS RECIBIDOS DE SUPABASE:", remoteMatchStats?.length);
 
             if (rosterError) throw rosterError;
             if (playerError) throw playerError;
@@ -1374,8 +1408,65 @@ function renderDashboardKillsDistribution() {
 
             state.rosters = loadedRosters;
             state.players = (remotePlayers || []).map(mapPlayer);
-            state.matchPlayerStats = (remoteMatchStats || [])
-                .map(mapMatchPlayerStat);
+
+            const registrosJugadorSupabase = (remoteMatchStats || [])
+    .filter(row => String(row.player_id) === "10");
+
+console.log("TOTAL EN SUPABASE:", registrosJugadorSupabase.length);
+
+console.table(registrosJugadorSupabase.map(row => ({
+    fecha: row.match_date,
+    bloque: row.block_number,
+    sala: row.room_number,
+    kills: row.kills,
+    damage: row.damage,
+    assists: row.assists,
+    knockdowns: row.knockdowns,
+    deaths: row.deaths
+})));
+
+console.table(
+    registrosJugadorSupabase
+        .filter(row =>
+            row.match_date === "2026-11-07"
+        )
+        .map(row => ({
+            fecha: row.match_date,
+            bloque: row.block_number,
+            sala: row.room_number,
+            kills: row.kills,
+            damage: row.damage,
+            assists: row.assists,
+            knockdowns: row.knockdowns,
+            deaths: row.deaths
+        }))
+);
+
+console.log(
+    "RESUMEN DE PARTIDAS DEL JUGADOR:",
+    {
+        totalRegistros: registrosJugadorSupabase.length,
+
+        conActividad: registrosJugadorSupabase.filter(row =>
+            Number(row.kills || 0) > 0 ||
+            Number(row.damage || 0) > 0 ||
+            Number(row.assists || 0) > 0 ||
+            Number(row.knockdowns || 0) > 0 ||
+            Number(row.deaths || 0) > 0
+        ).length,
+
+        sinActividad: registrosJugadorSupabase.filter(row =>
+            Number(row.kills || 0) === 0 &&
+            Number(row.damage || 0) === 0 &&
+            Number(row.assists || 0) === 0 &&
+            Number(row.knockdowns || 0) === 0 &&
+            Number(row.deaths || 0) === 0
+        ).length
+    }
+);
+
+state.matchPlayerStats = (remoteMatchStats || [])
+    .map(mapMatchPlayerStat);
 
             renderMainDashboard();
             
@@ -1872,9 +1963,21 @@ function getRosterMatchStats(rosterId) {
         rosterPlayers.map((player) => String(player.id))
     );
 
-    const stats = state.matchPlayerStats.filter(
-        (match) => playerIds.has(String(match.playerId))
+    const stats = state.matchPlayerStats.filter((match) => {
+    if (!playerIds.has(String(match.playerId))) {
+        return false;
+    }
+
+    return (
+        Number(match.kills) > 0 ||
+        Number(match.damage) > 0 ||
+        Number(match.assists) > 0 ||
+        Number(match.knockdowns) > 0 ||
+        Number(match.deaths) > 0 ||
+        Number(match.strategyScore) > 0 ||
+        Number(match.mobilityScore) > 0
     );
+});
 
     const totalKills = stats.reduce(
         (sum, match) => sum + Number(match.kills || 0),
@@ -1915,77 +2018,1030 @@ function getRosterMatchStats(rosterId) {
 
             const players = getPlayersForRoster(roster.id);
 
-            
-            // Rankings individuales del roster: kills y daño acumulados.
-            const killsRanking = $("rosterDetailKillsRanking");
-            const damageRanking = $("rosterDetailDamageRanking");
 
-            const playerStats = players.map((player) => {
-                const matches = state.matchPlayerStats.filter(
-                    (match) => String(match.playerId) === String(player.id)
-                );
+// ==========================================
+// SELECTOR DE JUGADORES PARA COMPARATIVA
+// ==========================================
 
-                return {
-                    player,
-                    totalKills: matches.reduce(
-                        (sum, match) => sum + Number(match.kills || 0),
-                        0
-                    ),
-                    totalDamage: matches.reduce(
-                        (sum, match) => sum + Number(match.damage || 0),
-                        0
-                    ),
-                    matchesCount: matches.length
-                };
+let comparisonPlayerA = null;
+let comparisonPlayerB = null;
+
+function renderComparisonPlayerSelector(side) {
+    const selectedPlayer = side === "A"
+        ? comparisonPlayerA
+        : comparisonPlayerB;
+
+    const otherPlayer = side === "A"
+        ? comparisonPlayerB
+        : comparisonPlayerA;
+
+    const options = players
+        .filter(player =>
+            !otherPlayer || String(player.id) !== String(otherPlayer.id)
+        );
+
+    const selectorHTML = `
+        <div class="comparison-selector-list">
+            ${options.map(player => `
+                <button
+                    type="button"
+                    class="comparison-selector-option"
+                    data-comparison-player="${escapeHTML(String(player.id))}"
+                    data-comparison-side="${side}"
+                >
+                    <img
+                        src="${escapeHTML(player.photo || "./assets/avatar-default.png")}"
+                        alt=""
+                        onerror="this.onerror=null;this.src='./assets/avatar-default.png';"
+                    >
+
+                    <span>
+                        <strong>${escapeHTML(player.nick || "Jugador sin nick")}</strong>
+                        <small>${escapeHTML(player.role || "Sin rol")}</small>
+                    </span>
+                </button>
+            `).join("")}
+
+            ${options.length ? "" : `
+                <p>No hay otros jugadores disponibles.</p>
+            `}
+        </div>
+    `;
+
+    return selectorHTML;
+}
+        
+// Actualizar la tarjeta del jugador seleccionado.
+function updateComparisonPlayerCard(side, player) {
+    const photo = $(`comparisonPlayer${side}Photo`);
+    const name = $(`comparisonPlayer${side}Name`);
+    const role = $(`comparisonPlayer${side}Role`);
+    const button = $(`selectComparisonPlayer${side}`);
+
+    if (photo) {
+        photo.innerHTML = `
+            <img
+                src="${escapeHTML(player.photo || "./assets/avatar-default.png")}"
+                alt="Foto de ${escapeHTML(player.nick || "Jugador")}"
+                onerror="this.onerror=null;this.src='./assets/avatar-default.png';"
+            >
+        `;
+    }
+
+    if (name) {
+        name.textContent = player.nick || "Jugador sin nick";
+    }
+
+    if (role) {
+        role.textContent = player.role || "Sin rol";
+    }
+
+    if (button) {
+        button.textContent = "Cambiar jugador";
+    }
+}
+
+// ==========================================
+// ACTUALIZAR COMPARATIVA DE ESTADÍSTICAS
+// ==========================================
+
+function updateComparisonStats() {
+    if (!comparisonPlayerA || !comparisonPlayerB) return;
+
+    const allStats = state.matchPlayerStats || [];
+
+    function getPlayerTotals(player) {
+        const playerMatches = allStats.filter(stat =>
+    String(stat.playerId) === String(player.id) &&
+    (
+        Number(stat.kills) > 0 ||
+        Number(stat.damage) > 0 ||
+        Number(stat.assists) > 0 ||
+        Number(stat.knockdowns) > 0 ||
+        Number(stat.deaths) > 0 ||
+        Number(stat.strategyScore) > 0 ||
+        Number(stat.mobilityScore) > 0
+    )
+);
+
+        const sum = field => playerMatches.reduce(
+            (total, stat) => total + (Number(stat[field]) || 0),
+            0
+        );
+
+        const validPositions = playerMatches
+            .map(stat => Number(stat.position))
+            .filter(position => Number.isFinite(position) && position > 0);
+
+        const average = (value, count) =>
+            count > 0 ? value / count : 0;
+
+        return {
+            matches: playerMatches.length,
+            kills: sum("kills"),
+            killsAverage: average(sum("kills"), playerMatches.length),
+            damage: sum("damage"),
+            damageAverage: average(sum("damage"), playerMatches.length),
+            assists: sum("assists"),
+            knockdowns: sum("knockdowns"),
+            deaths: sum("deaths"),
+            positionAverage: validPositions.length
+                ? validPositions.reduce((a, b) => a + b, 0) / validPositions.length
+                : 0
+        };
+    }
+
+    const totalsA = getPlayerTotals(comparisonPlayerA);
+    const totalsB = getPlayerTotals(comparisonPlayerB);
+
+    const metrics = [
+        { key: "matches", name: "Matches" },
+        { key: "kills", name: "Kills" },
+        { key: "killsAverage", name: "KillsAverage" },
+        { key: "damage", name: "Damage" },
+        { key: "damageAverage", name: "DamageAverage" },
+        { key: "assists", name: "Assists" },
+        { key: "knockdowns", name: "Knockdowns" },
+        { key: "deaths", name: "Deaths" },
+        { key: "positionAverage", name: "PositionAverage" }
+    ];
+
+    metrics.forEach(metric => {
+        const valueA = totalsA[metric.key];
+        const valueB = totalsB[metric.key];
+        const total = valueA + valueB;
+
+        const percentageA = total > 0
+            ? (valueA / total) * 100
+            : 0;
+
+        const percentageB = total > 0
+            ? (valueB / total) * 100
+            : 0;
+
+        const formatValue = value =>
+            value.toLocaleString("es-CO", {
+                maximumFractionDigits: 2
             });
 
-            function renderPlayerRanking(container, metric, label) {
-                if (!container) return;
+        const valuesElement = $(
+            `comparison${metric.name}Values`
+        );
 
-                const ranking = playerStats
-                    .filter((item) => item.matchesCount > 0)
-                    .sort((a, b) => b[metric] - a[metric]);
+        const barA = $(`comparison${metric.name}A`);
+        const barB = $(`comparison${metric.name}B`);
 
-                if (!ranking.length) {
-                    container.innerHTML = `
-                        <p class="dashboard-roster-vacio">
-                            Las estadísticas aparecerán cuando registres partidas.
-                        </p>
-                    `;
-                    return;
-                }
+        if (valuesElement) {
+            valuesElement.textContent =
+                `${formatValue(valueA)} - ${formatValue(valueB)}`;
+        }
 
-                
-                container.innerHTML = ranking.map((item, index) => `
-                    <article class="dashboard-roster-ranking-item">
-                        <span class="dashboard-roster-ranking-pos">
-                            ${String(index + 1).padStart(2, "0")}
-                        </span>
+        if (barA) barA.style.width = `${percentageA}%`;
+        if (barB) barB.style.width = `${percentageB}%`;
+    });
+}
 
-                        <div class="dashboard-roster-ranking-foto">
-                            <img
-                                src="${escapeHTML(item.player.photo || "./assets/avatar-default.png")}"
-                                alt="Foto de ${escapeHTML(item.player.nick || "Jugador")}"
-                                onerror="this.onerror=null;this.src='./assets/avatar-default.png';"
+// ==========================================
+// COMPARACIÓN DE ESTADÍSTICAS DE UNA PARTIDA
+// ==========================================
+
+function updateComparisonMatchStats() {
+    const container = $("comparisonMatchStats");
+
+    if (!container) return;
+
+    if (!comparisonPlayerA || !comparisonPlayerB) {
+        container.innerHTML = `
+            <p class="dashboard-roster-vacio">
+                Selecciona dos jugadores para comparar sus estadísticas.
+            </p>
+        `;
+        return;
+    }
+
+    const allStats = state.matchPlayerStats || [];
+
+    const hasValidResult = stat =>
+    Number(stat.kills) > 0 ||
+    Number(stat.damage) > 0 ||
+    Number(stat.assists) > 0 ||
+    Number(stat.knockdowns) > 0 ||
+    Number(stat.deaths) > 0 ||
+    Number(stat.strategyScore) > 0 ||
+    Number(stat.mobilityScore) > 0;
+
+const playerAStats = allStats.filter(stat =>
+    String(stat.playerId) === String(comparisonPlayerA.id) &&
+    hasValidResult(stat)
+);
+
+const playerBStats = allStats.filter(stat =>
+    String(stat.playerId) === String(comparisonPlayerB.id) &&
+    hasValidResult(stat)
+);
+
+    if (!playerAStats.length || !playerBStats.length) {
+        container.innerHTML = `
+            <p class="dashboard-roster-vacio">
+                No hay suficientes partidas registradas para comparar.
+            </p>
+        `;
+        return;
+    }
+
+    // Recuperar filtros anteriores.
+    const previousPeriod =
+        container.querySelector("#comparisonPeriod")?.value || "day";
+
+    const previousDate =
+        container.querySelector("#comparisonPeriodDate")?.value || "";
+
+    const previousBlock =
+        container.querySelector("#comparisonBlock")?.value || "all";
+
+    // Fecha más reciente registrada.
+    const availableDates = [
+        ...playerAStats,
+        ...playerBStats
+    ]
+        .map(stat => stat.matchDate)
+        .filter(Boolean)
+        .sort();
+
+    const latestDate = availableDates.at(-1);
+
+    const selectedDate = previousDate || latestDate;
+
+    // Formato de fecha local.
+    const toDateString = date => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+    };
+
+    // Calcular período seleccionado.
+    let startDate = selectedDate;
+    let endDate = selectedDate;
+    let periodLabel = selectedDate;
+
+    if (previousPeriod === "week") {
+        const date = new Date(`${selectedDate}T00:00:00`);
+        const day = date.getDay();
+        const difference = day === 0 ? -6 : 1 - day;
+
+        const monday = new Date(date);
+        monday.setDate(date.getDate() + difference);
+
+        const friday = new Date(monday);
+        friday.setDate(monday.getDate() + 4);
+
+        startDate = toDateString(monday);
+        endDate = toDateString(friday);
+
+        periodLabel = `Semana: ${startDate} al ${endDate}`;
+    }
+
+    if (previousPeriod === "month") {
+        startDate = selectedDate.slice(0, 7) + "-01";
+
+        const date = new Date(
+            `${selectedDate.slice(0, 7)}-01T00:00:00`
+        );
+
+        date.setMonth(date.getMonth() + 1);
+        date.setDate(0);
+
+        endDate = toDateString(date);
+
+        periodLabel = `Mes: ${selectedDate.slice(0, 7)}`;
+    }
+
+    // Filtrar partidas según el período.
+    const filterPeriod = stats => stats.filter(stat =>
+        stat.matchDate >= startDate &&
+        stat.matchDate <= endDate
+    );
+
+    const periodA = filterPeriod(playerAStats);
+    const periodB = filterPeriod(playerBStats);
+
+    // Mostrar únicamente bloques compartidos por ambos jugadores.
+const blocksA = new Set(
+    periodA.map(stat => String(stat.blockNumber))
+);
+
+const blocksB = new Set(
+    periodB.map(stat => String(stat.blockNumber))
+);
+
+const blocks = [...blocksA]
+    .filter(block => blocksB.has(block))
+    .sort((a, b) => Number(a) - Number(b));
+
+    const selectedBlock = blocks.includes(previousBlock)
+        ? previousBlock
+        : "all";
+
+    // Aplicar filtro de bloque.
+    const applyBlock = stats => stats.filter(stat =>
+        selectedBlock === "all" ||
+        String(stat.blockNumber) === selectedBlock
+    );
+
+    const filteredA = applyBlock(periodA);
+    const filteredB = applyBlock(periodB);
+
+    // Calcular estadísticas acumuladas.
+    const calculateTotals = stats => {
+        const sum = key => stats.reduce(
+            (total, stat) => total + Number(stat[key] || 0),
+            0
+        );
+
+        const positions = stats
+            .map(stat => Number(stat.position))
+            .filter(value => Number.isFinite(value) && value > 0);
+
+        return {
+            matches: stats.length,
+            kills: sum("kills"),
+            damage: sum("damage"),
+            assists: sum("assists"),
+            knockdowns: sum("knockdowns"),
+            deaths: sum("deaths"),
+            position: positions.length
+                ? positions.reduce((a, b) => a + b, 0) / positions.length
+                : null
+        };
+    };
+
+    const totalsA = calculateTotals(filteredA);
+    const totalsB = calculateTotals(filteredB);
+
+    const format = value =>
+        Number(value || 0).toLocaleString("es-CO", {
+            maximumFractionDigits: 1
+        });
+
+    const metrics = [
+        { key: "kills", label: "Kills" },
+        { key: "damage", label: "Daño" },
+        { key: "assists", label: "Asistencias" },
+        { key: "knockdowns", label: "Derribos" },
+        { key: "deaths", label: "Muertes" },
+        { key: "position", label: "Posición promedio" }
+    ];
+
+    
+const renderMetrics = totals => {
+    const averageKills = totals.matches
+        ? totals.kills / totals.matches
+        : 0;
+
+    const averageDamage = totals.matches
+        ? totals.damage / totals.matches
+        : 0;
+
+    return `
+        <div class="comparison-match-player-metrics">
+
+            <div class="comparison-match-player-metric">
+                <span>Kills totales</span>
+                <strong>${format(totals.kills)}</strong>
+                <small>${format(averageKills)} por partida</small>
+            </div>
+
+            <div class="comparison-match-player-metric">
+                <span>Daño total</span>
+                <strong>${format(totals.damage)}</strong>
+                <small>${format(averageDamage)} por partida</small>
+            </div>
+
+            <div class="comparison-match-player-metric">
+                <span>Asistencias</span>
+                <strong>${format(totals.assists)}</strong>
+            </div>
+
+            <div class="comparison-match-player-metric">
+                <span>Derribos</span>
+                <strong>${format(totals.knockdowns)}</strong>
+            </div>
+
+            <div class="comparison-match-player-metric">
+                <span>Muertes</span>
+                <strong>${format(totals.deaths)}</strong>
+            </div>
+
+            <div class="comparison-match-player-metric">
+                <span>Posición promedio</span>
+                <strong>${totals.position === null ? "—" : format(totals.position)}</strong>
+            </div>
+
+        </div>
+    `;
+};
+
+    container.innerHTML = `
+        <div class="comparison-match-content">
+
+            <div class="comparison-match-filters">
+
+                <div class="comparison-match-filter">
+                    <label for="comparisonPeriod">Período</label>
+
+                    <select id="comparisonPeriod">
+                        <option value="day" ${previousPeriod === "day" ? "selected" : ""}>Día</option>
+                        <option value="week" ${previousPeriod === "week" ? "selected" : ""}>Semana</option>
+                        <option value="month" ${previousPeriod === "month" ? "selected" : ""}>Mes</option>
+                    </select>
+                </div>
+
+                <div class="comparison-match-filter">
+                    <label for="comparisonPeriodDate">Fecha de referencia</label>
+
+                    <input
+                        type="date"
+                        id="comparisonPeriodDate"
+                        value="${escapeHTML(selectedDate)}"
+                    >
+                </div>
+
+                <div class="comparison-match-filter">
+                    <label for="comparisonBlock">Bloque</label>
+
+                    <select id="comparisonBlock">
+                        <option value="all">Todos los bloques</option>
+
+                        ${blocks.map(block => `
+                            <option
+                                value="${escapeHTML(block)}"
+                                ${selectedBlock === block ? "selected" : ""}
                             >
-                        </div>
+                                Bloque ${escapeHTML(block)}
+                            </option>
+                        `).join("")}
+                    </select>
+                </div>
 
-                        <div class="dashboard-roster-ranking-info">
-                            <strong>${escapeHTML(item.player.nick || "Jugador sin nick")}</strong>
-                            <small>${escapeHTML(item.player.role || "Sin rol")}</small>
-                        </div>
+            </div>
 
-                        <div class="dashboard-roster-ranking-valor">
-                            <strong>${item[metric].toLocaleString("es-CO")}</strong>
-                            <small>${label}</small>
-                        </div>
-                    </article>
-                `).join("");
+            <div class="comparison-match-map">
+                ${escapeHTML(periodLabel)}
+                · ${selectedBlock === "all"
+                    ? "Todos los bloques"
+                    : `Bloque ${escapeHTML(selectedBlock)}`}
+            </div>
 
+            <div class="comparison-match-players">
+
+                <div class="comparison-match-player comparison-match-card-a">
+
+                    <div class="comparison-match-player-header">
+                        <img
+                            src="${escapeHTML(comparisonPlayerA.photo || "./assets/avatar-default.png")}"
+                            onerror="this.onerror=null;this.src='./assets/avatar-default.png';"
+                            alt=""
+                        >
+
+                        <div>
+                            <span>JUGADOR A</span>
+                            <strong>${escapeHTML(comparisonPlayerA.nick || "Jugador A")}</strong>
+                        </div>
+                    </div>
+
+                    <div class="comparison-match-player-metric">
+                        <span>Partidas analizadas</span>
+                        <strong>${totalsA.matches}</strong>
+                    </div>
+
+                   ${renderMetrics(totalsA)}
+
+                </div>
+
+                <div class="comparison-match-player comparison-match-card-b">
+
+                    <div class="comparison-match-player-header">
+                        <img
+                            src="${escapeHTML(comparisonPlayerB.photo || "./assets/avatar-default.png")}"
+                            onerror="this.onerror=null;this.src='./assets/avatar-default.png';"
+                            alt=""
+                        >
+
+                        <div>
+                            <span>JUGADOR B</span>
+                            <strong>${escapeHTML(comparisonPlayerB.nick || "Jugador B")}</strong>
+                        </div>
+                    </div>
+
+                    <div class="comparison-match-player-metric">
+                        <span>Partidas analizadas</span>
+                        <strong>${totalsB.matches}</strong>
+                    </div>
+
+                    ${renderMetrics(totalsB)}
+
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+    // Actualizar al cambiar cualquier filtro.
+    container.querySelectorAll(
+        "#comparisonPeriod, #comparisonPeriodDate, #comparisonBlock"
+    ).forEach(control => {
+        control.addEventListener("change", updateComparisonMatchStats);
+    });
+}
+
+// ==========================================
+// MOSTRAR PARTIDA SELECCIONADA
+// ==========================================
+function renderSelectedComparisonMatch(match, playerAStats, playerBStats) {
+    const container = $("comparisonMatchStats");
+
+    if (!container) return;
+
+    const statA = playerAStats.find(stat =>
+        stat.matchDate === match.date &&
+        String(stat.blockNumber) === String(match.block) &&
+        String(stat.roomNumber) === String(match.room)
+    );
+
+    const statB = playerBStats.find(stat =>
+        stat.matchDate === match.date &&
+        String(stat.blockNumber) === String(match.block) &&
+        String(stat.roomNumber) === String(match.room)
+    );
+
+    if (!statA || !statB) return;
+
+    const format = value =>
+        Number(value || 0).toLocaleString("es-CO");
+
+    const metrics = [
+        { key: "kills", label: "Kills" },
+        { key: "damage", label: "Daño" },
+        { key: "assists", label: "Asistencias" },
+        { key: "knockdowns", label: "Derribos" },
+        { key: "deaths", label: "Muertes" },
+        { key: "position", label: "Posición" }
+    ];
+
+    const mapContainer = container.querySelector(
+        ".comparison-match-map"
+    );
+
+    if (mapContainer) {
+        mapContainer.textContent =
+            `Mapa: ${statA.map || statB.map || "No registrado"}`;
+    }
+
+    const cardA = container.querySelector(
+        ".comparison-match-card-a .comparison-match-player-metrics"
+    );
+
+    const cardB = container.querySelector(
+        ".comparison-match-card-b .comparison-match-player-metrics"
+    );
+
+    if (cardA) {
+        cardA.innerHTML = metrics.map(metric => `
+            <div class="comparison-match-player-metric">
+                <span>${metric.label}</span>
+                <strong>${format(statA[metric.key])}</strong>
+            </div>
+        `).join("");
+    }
+
+    if (cardB) {
+        cardB.innerHTML = metrics.map(metric => `
+            <div class="comparison-match-player-metric">
+                <span>${metric.label}</span>
+                <strong>${format(statB[metric.key])}</strong>
+            </div>
+        `).join("");
+    }
+}
+
+// Conectar los botones de selección.
+["A", "B"].forEach(side => {
+    const button = $(`selectComparisonPlayer${side}`);
+
+    if (!button) return;
+
+    button.onclick = () => {
+        // Cerrar cualquier selector anterior.
+        document.querySelectorAll(".comparison-selector-overlay")
+            .forEach(item => item.remove());
+
+        const overlay = document.createElement("div");
+        overlay.className = "comparison-selector-overlay";
+
+        overlay.innerHTML = `
+            <div class="comparison-selector-window">
+                <div class="comparison-selector-header">
+                    <div>
+                        <span>LOPZEK / COMPARATIVA</span>
+                        <h3>Seleccionar jugador</h3>
+                    </div>
+
+                    <button type="button" class="comparison-selector-close">
+                        ×
+                    </button>
+                </div>
+
+                ${renderComparisonPlayerSelector(side)}
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        // Cerrar ventana.
+        overlay.addEventListener("click", event => {
+            if (
+                event.target === overlay ||
+                event.target.closest(".comparison-selector-close")
+            ) {
+                overlay.remove();
+            }
+        });
+
+        // Seleccionar jugador.
+        overlay.addEventListener("click", event => {
+            const option = event.target.closest(
+                ".comparison-selector-option"
+            );
+
+            if (!option) return;
+
+            const player = players.find(
+                item => String(item.id) === option.dataset.comparisonPlayer
+            );
+
+            if (!player) return;
+
+            if (side === "A") {
+                comparisonPlayerA = player;
+            } else {
+                comparisonPlayerB = player;
             }
 
-            renderPlayerRanking(killsRanking, "totalKills", "KILLS");
-            renderPlayerRanking(damageRanking, "totalDamage", "DAÑO");
+            updateComparisonPlayerCard(side, player);
+            updateComparisonStats();
+            updateComparisonMatchStats();
+            overlay.remove();
+        });
+    };
+});
+
+// Rankings individuales del roster: kills, daño, asistencias y muertes.
+(() => {
+    const killsRanking = $("rosterDetailKillsRanking");
+    const damageRanking = $("rosterDetailDamageRanking");
+    const assistsRanking = $("rosterDetailAssistsRanking");
+    const deathsRanking = $("rosterDetailDeathsRanking");
+
+    // Controles del período.
+    const periodButtons = document.querySelectorAll("[data-ranking-period]");
+    const prevButton = $("rankingPeriodPrev");
+    const nextButton = $("rankingPeriodNext");
+    const periodLabel = $("rankingPeriodLabel");
+    const periodDate = $("rankingPeriodDate");
+
+    // Período inicial.
+    let selectedPeriod = "day";
+    let selectedDate = new Date();
+
+    // Convierte una fecha a formato YYYY-MM-DD.
+    function formatDateISO(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+    }
+
+    // Convierte YYYY-MM-DD a una fecha local.
+    function parseLocalDate(value) {
+        const [year, month, day] = value.split("-").map(Number);
+        return new Date(year, month - 1, day);
+    }
+
+    // Obtiene el rango del período seleccionado.
+    function getRankingDateRange(date, period) {
+        const start = new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate()
+        );
+
+        const end = new Date(start);
+
+        if (period === "week") {
+            const day = start.getDay();
+            const difference = day === 0 ? 6 : day - 1;
+
+            start.setDate(start.getDate() - difference);
+            end.setDate(start.getDate() + 6);
+        }
+
+        if (period === "month") {
+            start.setDate(1);
+            end.setMonth(end.getMonth() + 1, 0);
+        }
+
+        if (period === "year") {
+            start.setMonth(0, 1);
+            end.setMonth(11, 31);
+        }
+
+        return {
+            start: formatDateISO(start),
+            end: formatDateISO(end)
+        };
+    }
+
+    // Actualiza el texto del período.
+    function updateRankingPeriodLabel() {
+        const range = getRankingDateRange(
+            selectedDate,
+            selectedPeriod
+        );
+
+        if (selectedPeriod === "day") {
+            periodLabel.textContent = selectedDate.toLocaleDateString(
+                "es-CO",
+                {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric"
+                }
+            );
+        }
+
+        if (selectedPeriod === "week") {
+            const start = parseLocalDate(range.start);
+            const end = parseLocalDate(range.end);
+
+            periodLabel.textContent =
+                `${start.toLocaleDateString("es-CO", {
+                    day: "2-digit",
+                    month: "short"
+                })} - ${end.toLocaleDateString("es-CO", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric"
+                })}`;
+        }
+
+        if (selectedPeriod === "month") {
+            periodLabel.textContent = selectedDate.toLocaleDateString(
+                "es-CO",
+                {
+                    month: "long",
+                    year: "numeric"
+                }
+            );
+        }
+
+        if (selectedPeriod === "year") {
+            periodLabel.textContent = String(
+                selectedDate.getFullYear()
+            );
+        }
+
+        if (periodDate) {
+            periodDate.value = formatDateISO(selectedDate);
+        }
+
+        if (nextButton) {
+            nextButton.disabled =
+                range.end >= formatDateISO(new Date());
+        }
+    }
+
+    // Dibuja un ranking individual.
+    function renderPlayerRanking(playerStats, container, metric, label) {
+        if (!container) return;
+
+        const ranking = playerStats
+            .filter((item) => item.matchesCount > 0)
+            .sort((a, b) => b[metric] - a[metric]);
+
+        if (!ranking.length) {
+            container.innerHTML = `
+                <p class="dashboard-roster-vacio">
+                    No hay estadísticas registradas en este período.
+                </p>
+            `;
+            return;
+        }
+
+        container.innerHTML = ranking.map((item, index) => `
+            <article class="dashboard-roster-ranking-item">
+                <span class="dashboard-roster-ranking-pos">
+                    ${String(index + 1).padStart(2, "0")}
+                </span>
+
+                <div class="dashboard-roster-ranking-foto">
+                    <img
+                        src="${escapeHTML(item.player.photo || "./assets/avatar-default.png")}"
+                        alt="Foto de ${escapeHTML(item.player.nick || "Jugador")}"
+                        onerror="this.onerror=null;this.src='./assets/avatar-default.png';"
+                    >
+                </div>
+
+                <div class="dashboard-roster-ranking-info">
+                    <strong>${escapeHTML(item.player.nick || "Jugador sin nick")}</strong>
+                    <small>${escapeHTML(item.player.role || "Sin rol")}</small>
+                </div>
+
+                <div class="dashboard-roster-ranking-valor">
+                    <strong>${item[metric].toLocaleString("es-CO")}</strong>
+                    <small>${label}</small>
+                </div>
+            </article>
+        `).join("");
+    }
+
+    // Calcula y actualiza simultáneamente los cuatro rankings.
+    function updateRosterRankings() {
+        const range = getRankingDateRange(
+            selectedDate,
+            selectedPeriod
+        );
+
+        playerStats = players.map((player) => {
+            const matches = state.matchPlayerStats.filter((match) => {
+                const matchDate = String(match.matchDate || "").slice(0, 10);
+
+                const hasValidResult =
+    Number(match.kills) > 0 ||
+    Number(match.damage) > 0 ||
+    Number(match.assists) > 0 ||
+    Number(match.knockdowns) > 0 ||
+    Number(match.deaths) > 0 ||
+    Number(match.strategyScore) > 0 ||
+    Number(match.mobilityScore) > 0;
+
+return (
+    String(match.playerId) === String(player.id) &&
+    matchDate >= range.start &&
+    matchDate <= range.end &&
+    hasValidResult
+);
+            });
+
+            return {
+                player,
+                totalKills: matches.reduce(
+                    (sum, match) => sum + Number(match.kills || 0), 0
+                ),
+                totalDamage: matches.reduce(
+                    (sum, match) => sum + Number(match.damage || 0), 0
+                ),
+                totalAssists: matches.reduce(
+                    (sum, match) => sum + Number(match.assists || 0), 0
+                ),
+                totalDeaths: matches.reduce(
+                    (sum, match) => sum + Number(match.deaths || 0), 0
+                ),
+                matchesCount: matches.length
+            };
+        });
+
+        renderPlayerRanking(
+            playerStats, killsRanking, "totalKills", "KILLS"
+        );
+
+        renderPlayerRanking(
+            playerStats, damageRanking, "totalDamage", "DAÑO"
+        );
+
+        renderPlayerRanking(
+            playerStats, assistsRanking, "totalAssists", "ASISTENCIAS"
+        );
+
+        renderPlayerRanking(
+            playerStats, deathsRanking, "totalDeaths", "MUERTES"
+        );
+
+        // Actualizar también las gráficas comparativas.
+renderRosterPlayerChart(
+    "rosterDetailKillsChart",
+    "totalKills",
+    "dashboard-roster-chart-kills"
+);
+
+renderRosterPlayerChart(
+    "rosterDetailDamageChart",
+    "totalDamage",
+    "dashboard-roster-chart-damage"
+);
+
+        updateRankingPeriodLabel();
+    }
+
+    // Cambiar entre día, semana, mes y año.
+    periodButtons.forEach((button) => {
+        button.onclick = () => {
+            selectedPeriod = button.dataset.rankingPeriod;
+
+            periodButtons.forEach((item) => {
+                item.classList.toggle("active", item === button);
+            });
+
+            updateRosterRankings();
+        };
+    });
+
+    // Retroceder al período anterior.
+    if (prevButton) {
+        prevButton.onclick = () => {
+            if (selectedPeriod === "day") {
+                selectedDate.setDate(selectedDate.getDate() - 1);
+            }
+
+            if (selectedPeriod === "week") {
+                selectedDate.setDate(selectedDate.getDate() - 7);
+            }
+
+            if (selectedPeriod === "month") {
+                selectedDate.setMonth(
+                    selectedDate.getMonth() - 1
+                );
+            }
+
+            if (selectedPeriod === "year") {
+                selectedDate.setFullYear(
+                    selectedDate.getFullYear() - 1
+                );
+            }
+
+            updateRosterRankings();
+        };
+    }
+
+    // Avanzar al siguiente período.
+    if (nextButton) {
+        nextButton.onclick = () => {
+            const today = formatDateISO(new Date());
+            const currentRange = getRankingDateRange(
+                selectedDate,
+                selectedPeriod
+            );
+
+            if (currentRange.end >= today) return;
+
+            if (selectedPeriod === "day") {
+                selectedDate.setDate(selectedDate.getDate() + 1);
+            }
+
+            if (selectedPeriod === "week") {
+                selectedDate.setDate(selectedDate.getDate() + 7);
+            }
+
+            if (selectedPeriod === "month") {
+                selectedDate.setMonth(
+                    selectedDate.getMonth() + 1
+                );
+            }
+
+            if (selectedPeriod === "year") {
+                selectedDate.setFullYear(
+                    selectedDate.getFullYear() + 1
+                );
+            }
+
+            if (formatDateISO(selectedDate) > today) {
+                selectedDate = parseLocalDate(today);
+            }
+
+            updateRosterRankings();
+        };
+    }
+
+    // Elegir una fecha desde el calendario.
+    if (periodDate) {
+        periodDate.max = formatDateISO(new Date());
+
+        periodDate.onchange = () => {
+            if (!periodDate.value) return;
+
+            selectedDate = parseLocalDate(periodDate.value);
+            updateRosterRankings();
+        };
+    }
+
+    // Mostrar los rankings iniciales.
+    updateRosterRankings();
+})();
+
+var playerStats = [];
 
 // =====================================================
 // GRÁFICAS COMPARATIVAS PREMIUM DE JUGADORES
@@ -2170,13 +3226,23 @@ if (blockTop4PlusDisplay) {
     >
 </div>
                             <div class="detalle-roster-jugador-info">
-                                <strong>${escapeHTML(player.nick)}</strong>
-                                <span>${escapeHTML(player.role || "Rol sin definir")} · ${escapeHTML(player.status || "Sin estado")}</span>
-                                ${player.name
-                                    ? `<span>${escapeHTML(player.name)}</span>`
-                                    : ""
-                                }
-                            </div>
+    <strong>${escapeHTML(player.nick)}</strong>
+
+    <div class="detalle-roster-jugador-etiquetas">
+        <span class="jugador-rol-etiqueta">
+            ${escapeHTML(player.role || "Rol sin definir")}
+        </span>
+
+        <span class="jugador-estado-etiqueta">
+            ${escapeHTML(player.status || "Sin estado")}
+        </span>
+    </div>
+
+    ${player.name
+        ? `<span class="detalle-roster-nombre-real">${escapeHTML(player.name)}</span>`
+        : ""
+    }
+</div>
                         </article>
                     `).join("")
                     : `<p class="detalle-roster-sin-jugadores">
@@ -3493,6 +4559,27 @@ pointLabels: {
 // ==========================================
 // ESTADÍSTICAS REALES DEL JUGADOR
 // ==========================================
+console.log(
+    "REGISTROS DEL JUGADOR ANTES DEL FILTRO:",
+    state.matchPlayerStats.filter(stat =>
+        String(stat.playerId) === String(player.id)
+    )
+);
+
+console.table(
+    state.matchPlayerStats
+        .filter(stat => String(stat.playerId) === String(player.id))
+        .map(stat => ({
+            fecha: stat.matchDate,
+            bloque: stat.blockNumber,
+            sala: stat.roomNumber,
+            kills: stat.kills,
+            damage: stat.damage,
+            assists: stat.assists,
+            knockdowns: stat.knockdowns,
+            deaths: stat.deaths
+        }))
+);
 
 const playerStats = state.matchPlayerStats.filter((stat) => {
     if (String(stat.playerId) !== String(player.id)) {
@@ -3500,20 +4587,24 @@ const playerStats = state.matchPlayerStats.filter((stat) => {
     }
 
     const kills = Number(stat.kills) || 0;
-    const damage = Number(stat.damage) || 0;
-    const assists = Number(stat.assists) || 0;
-    const knockdowns = Number(stat.knockdowns) || 0;
-    const deaths = Number(stat.deaths) || 0;
+const damage = Number(stat.damage) || 0;
+const assists = Number(stat.assists) || 0;
+const knockdowns = Number(stat.knockdowns) || 0;
+const deaths = Number(stat.deaths) || 0;
+const strategyScore = Number(stat.strategyScore) || 0;
+const mobilityScore = Number(stat.mobilityScore) || 0;
 
-    // Excluir registros de salas que el jugador no jugó.
-    const noJugó =
-        kills === 0 &&
-        damage === 0 &&
-        assists === 0 &&
-        knockdowns === 0 &&
-        deaths === 0;
+// Excluir registros donde el jugador no tuvo actividad.
+const noJugó =
+    kills === 0 &&
+    damage === 0 &&
+    assists === 0 &&
+    knockdowns === 0 &&
+    deaths === 0 &&
+    strategyScore === 0 &&
+    mobilityScore === 0;
 
-    return !noJugó;
+return !noJugó;
 });
 
 console.table(
@@ -3559,6 +4650,16 @@ const totals = playerStats.reduce(
 );
 
 const totalMatches = matchKeys.size;
+
+console.log("DIAGNÓSTICO FN FOCO:", {
+    jugador: player.nick,
+    id: player.id,
+    registrosOriginales: state.matchPlayerStats.filter(
+        s => String(s.playerId) === String(player.id)
+    ).length,
+    registrosConActividad: playerStats.length,
+    partidasUnicas: matchKeys.size
+});
 
 const uniqueMatchPositions = new Map();
 
@@ -4664,8 +5765,18 @@ for (const field of [
     record[field] = value;
 }
 
-            records.push(record);
-        }
+// Registrar todos los jugadores para poder actualizar
+// también los resultados anteriores que ahora estén en cero.
+records.push(record);
+
+} // Fin del ciclo de jugadores
+
+if (records.length === 0) {
+    message.textContent =
+        "No hay resultados registrados. Todos los jugadores tienen sus estadísticas en cero.";
+    message.className = "form-message error";
+    return;
+}
 
         saveButton.disabled = true;
         saveButton.textContent = "Guardando...";
@@ -4703,6 +5814,17 @@ const rowsToSave = records.map((record) => ({
 
             if (saveError) throw saveError;
 
+            console.log(
+    "PARTIDA GUARDADA:",
+    rowsToSave.map(row => ({
+        jugador: row.player_id,
+        fecha: row.match_date,
+        bloque: row.block_number,
+        sala: row.room_number,
+        kills: row.kills
+    }))
+);
+
             state.matchPlayerStats = [];
 
             await loadDataFromSupabase();
@@ -4737,7 +5859,6 @@ const rowsToSave = records.map((record) => ({
         renderMatchStats: renderRosterOptions
     };
 }
-
 
 /* =====================================================
    LOPZEK — MÓDULO DE INFORMES
@@ -4814,7 +5935,18 @@ function initReportsModule() {
         const grouped = new Map();
 
         state.matchPlayerStats.forEach((stat) => {
-            if (!allowedDates.has(String(stat.matchDate))) return;
+    if (!allowedDates.has(String(stat.matchDate))) return;
+
+    const hasValidResult =
+        Number(stat.kills) > 0 ||
+        Number(stat.damage) > 0 ||
+        Number(stat.assists) > 0 ||
+        Number(stat.knockdowns) > 0 ||
+        Number(stat.deaths) > 0 ||
+        Number(stat.strategyScore) > 0 ||
+        Number(stat.mobilityScore) > 0;
+
+    if (!hasValidResult) return;
 
             const key =
                 `${stat.matchDate}|${stat.blockNumber}|${stat.roomNumber}`;
@@ -4876,8 +6008,18 @@ function initReportsModule() {
             monthName.charAt(0).toUpperCase() + monthName.slice(1);
 
         const activeDates = new Set(
-            state.matchPlayerStats.map((stat) => String(stat.matchDate))
-        );
+    state.matchPlayerStats
+        .filter((stat) =>
+            Number(stat.kills) > 0 ||
+            Number(stat.damage) > 0 ||
+            Number(stat.assists) > 0 ||
+            Number(stat.knockdowns) > 0 ||
+            Number(stat.deaths) > 0 ||
+            Number(stat.strategyScore) > 0 ||
+            Number(stat.mobilityScore) > 0
+        )
+        .map((stat) => String(stat.matchDate))
+);
 
         let daysHTML = "";
 
@@ -5015,9 +6157,21 @@ function renderSummary() {
     const selectedRosterId = reportsRosterFilter?.value || "";
     const selectedPlayerId = reportsPlayerFilter?.value || "";
 
-    const periodStats = state.matchPlayerStats.filter((stat) =>
-        allowedDates.has(String(stat.matchDate))
+    const periodStats = state.matchPlayerStats.filter((stat) => {
+    if (!allowedDates.has(String(stat.matchDate))) {
+        return false;
+    }
+
+    return (
+        Number(stat.kills) > 0 ||
+        Number(stat.damage) > 0 ||
+        Number(stat.assists) > 0 ||
+        Number(stat.knockdowns) > 0 ||
+        Number(stat.deaths) > 0 ||
+        Number(stat.strategyScore) > 0 ||
+        Number(stat.mobilityScore) > 0
     );
+});
 
     const getPlayerStats = (player) => {
         const stats = periodStats.filter(
